@@ -2,15 +2,8 @@
 
 import { useState } from "react"
 import { Link } from "react-router"
-import { ChevronDown, Menu, X, User, Ticket, Building2 } from "lucide-react"
+import { Menu, X, User, Ticket } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
 
 const navLinks = [
   { label: "SỰ KIỆN", href: "/su-kien" },
@@ -53,31 +46,7 @@ export function Header() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 h-16">
-            {/* Organizer Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="hidden md:flex gap-2 font-semibold text-foreground hover:bg-slate-200/50 border-0">
-                  <Building2 className="w-4 h-4" />
-                  Nhà tổ chức
-                  <ChevronDown className="w-3 h-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
-                <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary">
-                  Đăng ký tổ chức sự kiện
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary">
-                  Quản lý sự kiện
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary">
-                  Thiết lập sơ đồ ghế
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary">
-                  Báo cáo doanh thu
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
 
             <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 font-semibold text-foreground hover:bg-orange-100 hover:text-orange-900 transition-colors">
               <User className="w-4 h-4" />
@@ -113,16 +82,7 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
-              <div className="px-4 py-2">
-                <p className="text-xs font-semibold text-muted-foreground mb-2">Dành cho nhà tổ chức</p>
-                <Link
-                  to="/organizer"
-                  className="block px-4 py-2 text-sm font-semibold text-foreground hover:text-red-600 hover:bg-secondary rounded-lg transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Đăng ký tổ chức sự kiện
-                </Link>
-              </div>
+
               <div className="flex gap-2 px-4 pt-4 border-t border-border mt-2">
                 <Button variant="outline" size="sm" className="flex-1 font-semibold hover:bg-orange-100 hover:text-orange-900 hover:border-orange-200 transition-colors">
                   Đăng nhập
