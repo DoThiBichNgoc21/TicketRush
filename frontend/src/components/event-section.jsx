@@ -178,8 +178,8 @@ export function EventSection() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-6 py-3 text-sm font-semibold rounded-lg transition-all ${activeTab === tab.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"
                 }`}
             >
               {tab.label}
