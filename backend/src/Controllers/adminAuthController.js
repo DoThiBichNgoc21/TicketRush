@@ -31,8 +31,8 @@ export const adminLogin = async (req, res) => {
       return res.status(403).json({ message: "Tài khoản đã bị khóa" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-
+    //const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = password === user.password;
     if (!isMatch) {
       return res.status(401).json({ message: "Mật khẩu không đúng" });
     }
@@ -52,7 +52,8 @@ export const adminLogin = async (req, res) => {
         username: user.username,
         role: user.role,
       },
-      process.env.JWT_SECRET || 'secret',
+      //process.env.JWT_SECRET || 'secret',
+      process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 

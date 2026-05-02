@@ -3,11 +3,34 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function TicketRushAdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    navigate("/admin/dashboard");
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:3000/api/admin/login/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("admin_id", String(data.admin.id));
+      localStorage.setItem("admin_username", data.admin.username);
+      navigate("/admin/dashboard");
+    } catch (err) {
+      setError(err.message || "Đăng nhập thất bại");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -57,13 +80,20 @@ export default function TicketRushAdminLogin() {
 
             {/* Form */}
             <form className="w-full flex flex-col gap-[24px]" onSubmit={handleLogin}>
-              {/* Email Field */}
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">error</span>
+                  {error}
+                </div>
+              )}
+              {/* Email/Username Field */}
               <div className="flex flex-col gap-2">
                 <label
                   className="font-['Inter'] font-semibold text-[14px] leading-[20px] text-[#191c1d]"
                   htmlFor="email"
                 >
-                  Địa chỉ Email
+                  Email hoặc Tên đăng nhập
                 </label>
                 <div className="relative flex items-center">
                   <span
@@ -77,7 +107,9 @@ export default function TicketRushAdminLogin() {
                     id="email"
                     placeholder="admin@ticketrush.com"
                     required
-                    type="email"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                   />
                 </div>
               </div>
@@ -103,6 +135,8 @@ export default function TicketRushAdminLogin() {
                     placeholder="••••••••"
                     required
                     type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                   <button
                     className="absolute right-[16px] text-[#5e3f3a] hover:text-[#191c1d] transition-colors flex items-center justify-center focus:outline-none"
@@ -131,13 +165,21 @@ export default function TicketRushAdminLogin() {
 
               {/* Submit Button */}
               <button
-                className="w-full bg-[#e00d0d] text-[#ffffff] font-['Inter'] font-semibold text-[16px] leading-[24px] tracking-[0.01em] py-[14px] rounded-lg hover:bg-[#b30004] transition-all active:scale-[0.98] shadow-[0_2px_8px_rgba(224,13,13,0.25)] flex items-center justify-center gap-2 mt-2"
+                className="w-full bg-[#e00d0d] text-[#ffffff] font-['Inter'] font-semibold text-[16px] leading-[24px] tracking-[0.01em] py-[14px] rounded-lg hover:bg-[#b30004] transition-all active:scale-[0.98] shadow-[0_2px_8px_rgba(224,13,13,0.25)] flex items-center justify-center gap-2 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 type="submit"
+                disabled={loading}
               >
-                Đăng nhập
-                <span className="material-symbols-outlined text-[20px]">
-                  arrow_forward
-                </span>
+                {loading ? (
+                  <>
+                    <span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+                    Đang đăng nhập...
+                  </>
+                ) : (
+                  <>
+                    Đăng nhập
+                    <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+                  </>
+                )}
               </button>
             </form>
           </div>

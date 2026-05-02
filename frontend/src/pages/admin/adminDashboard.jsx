@@ -32,10 +32,13 @@ export default function AdminDashboard() {
                         <span className="material-symbols-outlined" data-icon="dashboard">dashboard</span>
                         <span>Bảng điều khiển</span>
                     </a>
-                    <a className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm" href="#">
-                        <span className="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+                    <button
+                        onClick={() => navigate("/admin/events")}
+                        className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
+                        >
+                        <span className="material-symbols-outlined">calendar_today</span>
                         <span>Sự kiện</span>
-                    </a>
+                    </button>
                     <a className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm" href="#">
                         <span className="material-symbols-outlined" data-icon="group">group</span>
                         <span>Người dùng</span>
@@ -85,7 +88,10 @@ export default function AdminDashboard() {
                         <button className="p-2 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors rounded-full active:scale-95 duration-150">
                             <span className="material-symbols-outlined" data-icon="settings">settings</span>
                         </button>
-                        <button className="bg-[#b30004] text-white px-4 py-2 rounded-lg font-semibold flex items-center space-x-2 active:scale-95 duration-150">
+                        <button
+                            onClick={() => navigate("/admin/events/create/step-1")}
+                            className="bg-[#b30004] text-white px-4 py-2 rounded-lg font-semibold flex items-center space-x-2 active:scale-95 duration-150 hover:bg-red-800 transition-colors"
+                        >
                             <span className="material-symbols-outlined text-lg" data-icon="add">add</span>
                             <span>Tạo sự kiện</span>
                         </button>
