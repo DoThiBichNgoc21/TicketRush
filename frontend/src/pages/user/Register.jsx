@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Mail, Lock, User as UserIcon, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import axiosInstance from '../../lib/axiosInstance.js';
 
 export default function UserRegister() {
@@ -14,6 +15,8 @@ export default function UserRegister() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -48,126 +51,192 @@ export default function UserRegister() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)] text-[var(--color-foreground)]">
-      <div className="w-full max-w-md p-8 rounded-2xl border border-[var(--color-border)] shadow-sm bg-[var(--color-card)]">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold">Tạo tài khoản</h1>
-          <p className="text-sm text-[var(--color-muted-foreground)] mt-1">Tham gia cùng TicketRush ngay hôm nay</p>
-        </div>
+    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
+      {/* Back button */}
+      <div className="absolute top-4 left-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      </div>
 
-        {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">
-            {error}
+      {/* Center card */}
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-[420px] bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+          {/* Logo */}
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-red-600 tracking-tight">TicketRush</h1>
+            <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase bg-gray-200 text-gray-600 rounded">
+              USER
+            </span>
+            <h2 className="mt-4 text-xl font-semibold text-gray-900">Create Account</h2>
+            <p className="mt-1 text-sm text-gray-500">Join TicketRush to discover amazing events.</p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Username + Email */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Username</label>
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    name="username"
+                    required
+                    value={form.username}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-3 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
+                    placeholder="user01"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    value={form.email}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-3 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
+                    placeholder="user@ticketrush.com"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Last Name + First Name */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Last Name</label>
+                <input
+                  type="text"
+                  name="last_name"
+                  value={form.last_name}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
+                  placeholder="Nguyen"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">First Name</label>
+                <input
+                  type="text"
+                  name="first_name"
+                  value={form.first_name}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
+                  placeholder="Van A"
+                />
+              </div>
+            </div>
+
+            {/* Phone */}
             <div>
-              <label className="block text-sm font-medium mb-1">Username</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number</label>
               <input
-                type="text"
-                name="username"
-                required
-                value={form.username}
+                type="tel"
+                name="phone_number"
+                value={form.phone_number}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-[var(--color-input)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-[var(--color-background)]"
-                placeholder="user01"
+                className="w-full px-3 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
+                placeholder="0901234567"
               />
             </div>
+
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
-              <input
-                type="email"
-                name="email"
-                required
-                value={form.email}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-[var(--color-input)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-[var(--color-background)]"
-                placeholder="user@ticketrush.com"
-              />
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  required
+                  value={form.password}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-10 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
+            {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium mb-1">Họ</label>
-              <input
-                type="text"
-                name="last_name"
-                value={form.last_name}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-[var(--color-input)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-[var(--color-background)]"
-                placeholder="Nguyễn"
-              />
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Confirm Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type={showConfirm ? 'text' : 'password'}
+                  name="confirmPassword"
+                  required
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-10 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Tên</label>
-              <input
-                type="text"
-                name="first_name"
-                value={form.first_name}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-[var(--color-input)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-[var(--color-background)]"
-                placeholder="Văn A"
-              />
-            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 rounded-md bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 text-sm font-semibold transition disabled:opacity-60"
+            >
+              {loading ? 'Creating account...' : (
+                <>
+                  Register <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Link */}
+          <div className="mt-6 text-center text-sm text-gray-500">
+            Already have an account?{' '}
+            <Link to="/login" className="font-semibold text-gray-900 hover:text-red-600 transition">
+              Sign in
+            </Link>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Số điện thoại</label>
-            <input
-              type="tel"
-              name="phone_number"
-              value={form.phone_number}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-[var(--color-input)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-[var(--color-background)]"
-              placeholder="0901234567"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Mật khẩu</label>
-            <input
-              type="password"
-              name="password"
-              required
-              value={form.password}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-[var(--color-input)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-[var(--color-background)]"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Xác nhận mật khẩu</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              required
-              value={form.confirmPassword}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-[var(--color-input)] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--color-ring)] bg-[var(--color-background)]"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-[var(--color-primary)] text-[var(--color-primary-foreground)] px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition"
-          >
-            {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center text-sm text-[var(--color-muted-foreground)]">
-          Đã có tài khoản?{' '}
-          <Link to="/login" className="text-[var(--color-primary)] hover:underline font-medium">
-            Đăng nhập
-          </Link>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="py-4 text-center">
+        <div className="flex items-center justify-center gap-6 text-[11px] font-medium tracking-wide text-gray-500 uppercase">
+          <span>&copy; 2024 TICKETRUSH. ALL RIGHTS RESERVED.</span>
+          <Link to="/privacy" className="hover:text-red-600 transition">Privacy Policy</Link>
+          <Link to="/terms" className="hover:text-red-600 transition">Terms of Service</Link>
+        </div>
+      </footer>
     </div>
   );
 }

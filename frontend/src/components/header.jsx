@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router"
-import { ChevronDown, Menu, X, User, Ticket, Building2, LogOut } from "lucide-react"
+import { ChevronDown, Menu, X, User, Ticket, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -74,32 +74,6 @@ export function Header() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 h-16">
-            {/* Organizer Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="hidden md:flex gap-2 font-semibold text-foreground hover:bg-slate-200/50 border-0">
-                  <Building2 className="w-4 h-4" />
-                  Nhà tổ chức
-                  <ChevronDown className="w-3 h-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
-                <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary">
-                  Đăng ký tổ chức sự kiện
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary">
-                  Quản lý sự kiện
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary">
-                  Thiết lập sơ đồ ghế
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary">
-                  Báo cáo doanh thu
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -161,16 +135,6 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
-              <div className="px-4 py-2">
-                <p className="text-xs font-semibold text-muted-foreground mb-2">Dành cho nhà tổ chức</p>
-                <Link
-                  to="/organizer"
-                  className="block px-4 py-2 text-sm font-semibold text-foreground hover:text-red-600 hover:bg-secondary rounded-lg transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Đăng ký tổ chức sự kiện
-                </Link>
-              </div>
               {user ? (
                 <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border mt-2">
                   <p className="text-sm font-medium text-foreground">{user.first_name || user.username} ({user.email})</p>
