@@ -51,16 +51,16 @@ export function SeatMap({ seats, selectedSeats, onSeatClick, maxSeats = 8 }) {
               <span className="w-6 text-center text-xs font-medium text-muted-foreground sm:text-sm">
                 {row}
               </span>
-              
+
               {/* Seats */}
               <div className="flex gap-1 sm:gap-1.5">
                 {Array.from({ length: 15 }, (_, i) => {
                   const seat = getSeatByPosition(row, i + 1)
                   if (!seat) return <div key={i} className="h-6 w-6 sm:h-8 sm:w-8" />
-                  
+
                   const status = getSeatStatus(seat)
                   const isClickable = status === "available" || status === "vip" || status === "selected"
-                  
+
                   return (
                     <button
                       key={seat.id}
@@ -81,7 +81,7 @@ export function SeatMap({ seats, selectedSeats, onSeatClick, maxSeats = 8 }) {
                   )
                 })}
               </div>
-              
+
               {/* Row label right */}
               <span className="w-6 text-center text-xs font-medium text-muted-foreground sm:text-sm">
                 {row}

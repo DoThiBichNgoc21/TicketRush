@@ -48,12 +48,16 @@ export function EventCard({ event }) {
         >
           <Button
             size="sm"
-            className="bg-red-600 hover:bg-red-700 text-white gap-2"
+            className="w-10/12 max-w-[140px] text-xs sm:text-sm bg-red-600 hover:bg-red-700 text-white gap-2"
             disabled={event.soldOut}
           >
             {event.soldOut ? "Hết vé" : "Mua vé ngay"}
           </Button>
-          <Button size="sm" variant="outline" className="border-foreground/30 text-foreground hover:bg-foreground/10">
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-10/12 max-w-[140px] text-xs sm:text-sm border-foreground/30 text-foreground hover:bg-foreground/10"
+          >
             Xem chi tiết
           </Button>
         </div>
