@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Link, useNavigate } from "react-router"
+import { Link, useNavigate } from "react-router-dom"
 import { ChevronDown, Menu, X, User, Ticket, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
