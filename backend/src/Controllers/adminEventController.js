@@ -28,7 +28,8 @@ export const createEventStep1 = async (req, res) => {
                     date,
                     location,
                     category,
-                    image_url
+                    image_url,
+                    status: "draft"
                 }
             ])
             .select()
@@ -48,7 +49,7 @@ export const createEventStep1 = async (req, res) => {
 export const createShowtimeStep2 = async (req, res) => {
     try {
         const { event_id } = req.params;
-        const { start_time, location, city } = req.body;
+        const { start_time, location, city, latitude, longitude } = req.body;
 
         if (!start_time) {
             return res.status(400).json({
@@ -69,7 +70,10 @@ export const createShowtimeStep2 = async (req, res) => {
             .insert([
                 {
                     event_id,
-                    start_time
+                    start_time,
+                    city,
+                    latitude,
+                    longitude
                 }
             ])
             .select()
@@ -123,10 +127,13 @@ export const createSeatingChartStep3 = async (req, res) => {
 
         const seatData = seats.map((seat) => ({
             showtime_id,
+            floor: seat.floor,
             section: seat.section,
             row: seat.row,
             seat_number: seat.seat_number,
             status: seat.status || "available",
+            seat_type: seat.seat_type || "Standard",
+            price: seat.price || 0,
             locked_at: null,
             user_id: null
         }));

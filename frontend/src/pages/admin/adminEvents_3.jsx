@@ -1,154 +1,229 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { setCookie, getCookie, removeCookie } from "../../utils/cookieUtils";
 
-const DEFAULT_CONFIG = {
-  rows: 10,
-  cols: 14,
-  vipRows: 3,
-  standardRows: 7,
-  vipPrice: 1000000,
-  standardPrice: 500000,
-};
+const Step = ({ number, label, active, completed }) => (
+  <div className="flex flex-col items-center gap-2">
+    <div
+      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
+        active
+          ? "bg-red-700 text-white shadow-lg ring-4 ring-red-50"
+          : completed
+          ? "bg-red-700 text-white"
+          : "bg-slate-100 text-slate-400"
+      }`}
+    >
+      {completed ? (
+        <span className="material-symbols-outlined text-base">check</span>
+      ) : (
+        number
+      )}
+    </div>
+    <span
+      className={`text-xs font-bold whitespace-nowrap ${
+        active ? "text-red-700" : "text-slate-500"
+      }`}
+    >
+      {label}
+    </span>
+  </div>
+);
 
-const rowName = (index) => String.fromCharCode(65 + index);
-
-function generateCinemaSeats(config) {
-  const seats = [];
-
-  for (let rowIndex = 0; rowIndex < config.rows; rowIndex++) {
-    const isVip = rowIndex < config.vipRows;
-    const section = isVip ? "VIP" : "Standard";
-    const seatType = isVip ? "VIP" : "Standard";
-    const price = isVip ? config.vipPrice : config.standardPrice;
-    const rowLabel = rowName(rowIndex);
-
-    for (let col = 1; col <= config.cols; col++) {
-      seats.push({
-        section,
-        row: rowLabel,
-        seat_number: `${rowLabel}${col}`,
-        status: "available",
-        seat_type: seatType,
-        price,
-        total_rows: config.rows,
-        total_cols: config.cols,
-        vip_rows: config.vipRows,
-        standard_rows: config.standardRows,
-        vip_price: config.vipPrice,
-        standard_price: config.standardPrice,
-      });
-    }
-  }
-
-  return seats;
-}
-
-function CreateEventStep3() {
+const TicketRushSeatMapDesign = () => {
   const navigate = useNavigate();
 
-  const savedStep3 =
-    JSON.parse(localStorage.getItem("create_event_step_3")) || {};
-
-  const [config, setConfig] = useState(savedStep3.config || DEFAULT_CONFIG);
+  // Load basic event info from localStorage
+  const draftEventId = getCookie("draft_event_id");
+  const draftShowtimeId = getCookie("draft_showtime_id");
+  const draftEventName = getCookie("draft_event_name") || "Sự kiện chưa đặt tên";
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
+  const [floors, setFloors] = useState(["Tầng 1", "Tầng 2"]);
+  const [activeFloor, setActiveFloor] = useState("Tầng 1");
 
-  const showtime_id = localStorage.getItem("draft_showtime_id");
-  const event_name = localStorage.getItem("draft_event_name") || "Sự kiện";
+  // State for seat sections
+  const [sections, setSections] = useState([
+    {
+      id: "sec_1",
+      name: "Khu vực A",
+      type: "VIP",
+      price: 1000000,
+      rows: 2,
+      cols: 5,
+      x: 100,
+      y: 100,
+      rotation: 0,
+      shape: "rectangle",
+      floor: "Trệt",
+    }
+  ]);
 
-  const seats = useMemo(() => generateCinemaSeats(config), [config]);
+  const [selectedSectionId, setSelectedSectionId] = useState(sections[0]?.id);
 
-  const vipSeats = seats.filter((seat) => seat.section === "VIP").length;
-  const standardSeats = seats.filter((seat) => seat.section === "Standard").length;
+  const selectedSection = sections.find(s => s.id === selectedSectionId);
 
-  const saveStep3 = (newConfig = config) => {
-    localStorage.setItem(
-      "create_event_step_3",
-      JSON.stringify({
-        config: newConfig,
-      })
-    );
+  // Helper to update a specific section property
+  const updateSection = (id, updates) => {
+    setSections(prev => prev.map(sec => sec.id === id ? { ...sec, ...updates } : sec));
   };
 
-  const updateConfig = (field, value) => {
-    const nextConfig = {
-      ...config,
-      [field]: Number(value),
+  // Helper to add a new section
+  const addSection = (shapeType = "rectangle") => {
+    const newId = "sec_" + Date.now();
+    const isArc = shapeType === "arc";
+
+    const newSection = {
+      id: newId,
+      name: isArc ? "Khu vực vòng cung" : "Khu vực mới",
+      type: "Standard",
+      price: 500000,
+      rows: isArc ? 1 : 5,
+      cols: isArc ? 8 : 10,
+      x: 200,
+      y: 200,
+      rotation: 0,
+      shape: shapeType,
+      floor: activeFloor,
     };
-
-    if (field === "rows") {
-      const rows = Number(value);
-      nextConfig.vipRows = Math.min(nextConfig.vipRows, rows);
-      nextConfig.standardRows = Math.max(rows - nextConfig.vipRows, 0);
-    }
-
-    if (field === "vipRows") {
-      const vipRows = Number(value);
-      nextConfig.vipRows = Math.min(vipRows, nextConfig.rows);
-      nextConfig.standardRows = Math.max(nextConfig.rows - nextConfig.vipRows, 0);
-    }
-
-    if (field === "standardRows") {
-      const standardRows = Number(value);
-      nextConfig.standardRows = Math.min(standardRows, nextConfig.rows);
-      nextConfig.vipRows = Math.max(nextConfig.rows - nextConfig.standardRows, 0);
-    }
-
-    setConfig(nextConfig);
-    saveStep3(nextConfig);
+    setSections(prev => [...prev, newSection]);
+    setSelectedSectionId(newId);
   };
 
-  const handleBack = () => {
-    saveStep3();
-    navigate("/admin/events/create/step-2");
+  const deleteSection = (id) => {
+    setSections(prev => prev.filter(sec => sec.id !== id));
+    if (selectedSectionId === id) setSelectedSectionId(null);
   };
+
+  const addFloor = () => {
+    const nextFloorNumber = floors.length + 1;
+    const nextFloorName = `Tầng ${nextFloorNumber}`;
+    if (!floors.includes(nextFloorName)) {
+      setFloors(prev => [...prev, nextFloorName]);
+      setActiveFloor(nextFloorName);
+    }
+  };
+
+  const deleteFloor = (floorName) => {
+    if (floors.length <= 1) {
+      setError("Không thể xóa tầng cuối cùng.");
+      return;
+    }
+
+    if (window.confirm(`Bạn có chắc chắn muốn xóa "${floorName}" và toàn bộ ghế trong tầng này không?`)) {
+      setFloors(prev => prev.filter(f => f !== floorName));
+      setSections(prev => prev.filter(s => s.floor !== floorName));
+
+      if (activeFloor === floorName) {
+        const remainingFloors = floors.filter(f => f !== floorName);
+        setActiveFloor(remainingFloors[remainingFloors.length - 1]);
+      }
+    }
+  };
+
+  // Dragging logic
+  const [draggingId, setDraggingId] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = (e, id) => {
+    if (e.button !== 0) return; // Only left click
+    const sec = sections.find(s => s.id === id);
+    if (!sec) return;
+
+    setDraggingId(id);
+    setSelectedSectionId(id);
+    setDragOffset({
+      x: e.clientX - sec.x,
+      y: e.clientY - sec.y
+    });
+  };
+
+  const handleMouseMove = useCallback((e) => {
+    if (!draggingId) return;
+
+    const newX = e.clientX - dragOffset.x;
+    const newY = e.clientY - dragOffset.y;
+
+    setSections(prev => prev.map(sec =>
+      sec.id === draggingId ? { ...sec, x: newX, y: newY } : sec
+    ));
+  }, [draggingId, dragOffset]);
+
+  const handleMouseUp = useCallback(() => {
+    setDraggingId(null);
+  }, []);
+
+  useEffect(() => {
+    if (draggingId) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    } else {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [draggingId, handleMouseMove, handleMouseUp]);
 
   const handleFinish = async () => {
-    setError("");
-
-    if (!showtime_id) {
-      setError("Không tìm thấy suất diễn. Vui lòng quay lại Bước 2.");
+    if (!draftShowtimeId) {
+      setError("Không tìm thấy thông tin suất diễn. Vui lòng hoàn thành Bước 2.");
       return;
     }
 
-    if (seats.length === 0) {
-      setError("Vui lòng tạo ít nhất một ghế.");
+    if (sections.length === 0) {
+      setError("Vui lòng thiết kế ít nhất một khu vực ghế.");
       return;
     }
-
-    const event_id = localStorage.getItem("draft_event_id");
 
     setLoading(true);
+    setError("");
 
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/admin/events/${event_id}/step-3/seats`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            showtime_id,
-            seats,
-          }),
+      // Transform sections into individual seats
+      const allSeats = [];
+      sections.forEach(sec => {
+        for (let r = 1; r <= sec.rows; r++) {
+          for (let c = 1; c <= sec.cols; c++) {
+            allSeats.push({
+              floor: sec.floor,
+              section: sec.name,
+              row: String.fromCharCode(64 + r), // A, B, C...
+              seat_number: c,
+              status: "available",
+              seat_type: sec.type,
+              price: sec.price
+            });
+          }
         }
-      );
+      });
 
-      const data = await res.json();
+      const response = await fetch(`http://localhost:3000/api/admin/events/${draftEventId}/step-3/seats`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          showtime_id: draftShowtimeId,
+          seats: allSeats
+        })
+      });
 
-      if (!res.ok) {
+      const data = await response.json();
+
+      if (!response.ok) {
         throw new Error(data.message || "Lưu sơ đồ ghế thất bại.");
       }
 
-      localStorage.removeItem("draft_event_id");
-      localStorage.removeItem("draft_showtime_id");
-      localStorage.removeItem("draft_event_name");
-      localStorage.removeItem("draft_location");
-      localStorage.removeItem("create_event_step_1");
-      localStorage.removeItem("create_event_step_2");
-      localStorage.removeItem("create_event_step_3");
+      // Success! Clear draft and redirect
+      removeCookie("create_event_step_1");
+      removeCookie("create_event_step_2");
+      removeCookie("draft_event_id");
+      removeCookie("draft_showtime_id");
 
-      setSuccess(true);
+      alert("Chúc mừng! Bạn đã tạo sự kiện thành công.");
+      navigate("/admin/events");
     } catch (err) {
       setError(err.message || "Có lỗi xảy ra, thử lại sau.");
     } finally {
@@ -156,310 +231,499 @@ function CreateEventStep3() {
     }
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-xl border p-12 max-w-md text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="material-symbols-outlined text-green-600 text-4xl">
-              check_circle
-            </span>
-          </div>
-
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">
-            Tạo sự kiện thành công!
-          </h2>
-
-          <p className="text-slate-500 mb-8">
-            Sự kiện{" "}
-            <span className="font-semibold text-slate-700">{event_name}</span>{" "}
-            đã được tạo với{" "}
-            <span className="font-semibold text-red-700">{seats.length}</span>{" "}
-            ghế.
-          </p>
-
-          <button
-            onClick={() => navigate("/admin/events")}
-            className="w-full bg-red-700 text-white py-3 rounded-lg font-semibold hover:bg-red-800 transition-colors"
-          >
-            Về trang sự kiện
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-slate-900 font-sans">
-      <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 shadow-sm z-40 flex items-center justify-between px-6">
-        <h1 className="text-xl font-black tracking-tighter text-red-700">
-          TicketRush Admin
-        </h1>
+    <>
+      <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+        @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap");
 
-        <div className="flex items-center gap-3">
-          <button className="p-2 text-slate-600 hover:bg-slate-50 rounded-full">
-            <span className="material-symbols-outlined">notifications</span>
-          </button>
+        .canvas-grid {
+          background-image: radial-gradient(circle, #e2e8f0 1px, transparent 1px);
+          background-size: 24px 24px;
+        }
 
-          <button className="p-2 text-slate-600 hover:bg-slate-50 rounded-full">
-            <span className="material-symbols-outlined">settings</span>
-          </button>
+        .seat-manual {
+          width: 14px;
+          height: 14px;
+          border-radius: 2px;
+        }
 
-          <img
-            src="https://i.pravatar.cc/100?img=12"
-            className="w-8 h-8 rounded-full border"
-            alt="avatar"
-          />
-        </div>
-      </header>
+        .material-symbols-outlined {
+          font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+        }
 
-      <main className="pt-16 min-h-screen bg-[#f8f9fa] flex justify-center">
-        <div className="w-full max-w-7xl px-6 py-10">
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-lg p-8">
+        .bg-surface {
+          background-color: #f8f9fa;
+        }
+
+        .text-on-surface {
+          color: #191c1d;
+        }
+
+        .text-secondary {
+          color: #5f5e5e;
+        }
+
+        .text-primary {
+          color: #b30004;
+        }
+
+        .bg-primary {
+          background-color: #b30004;
+        }
+
+        .bg-tertiary {
+          background-color: #0053b7;
+        }
+
+        .text-tertiary {
+          color: #0053b7;
+        }
+
+        .font-body-md {
+          font-family: "Inter", sans-serif;
+          font-size: 16px;
+          line-height: 24px;
+          font-weight: 400;
+        }
+
+        .font-button {
+          font-family: "Inter", sans-serif;
+        }
+
+        .text-button {
+          font-size: 16px;
+          line-height: 24px;
+          letter-spacing: 0.01em;
+          font-weight: 600;
+        }
+
+        .text-label-sm {
+          font-size: 14px;
+          line-height: 20px;
+          font-weight: 600;
+        }
+      `}</style>
+
+      <div className="min-h-screen bg-[#f8f9fa] text-slate-900 font-sans flex flex-col">
+        {/* Header (Same as Step 1 & 2) */}
+        <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 shadow-sm z-[100] flex items-center justify-between px-6">
+          <h1 className="text-xl font-black tracking-tighter text-red-700">
+            TicketRush Admin
+          </h1>
+
+          <div className="flex items-center gap-3">
+            <button className="p-2 text-slate-600 hover:bg-slate-50 rounded-full">
+              <span className="material-symbols-outlined">notifications</span>
+            </button>
+            <button className="p-2 text-slate-600 hover:bg-slate-50 rounded-full">
+              <span className="material-symbols-outlined">settings</span>
+            </button>
+            <div className="h-8 w-px bg-slate-200 mx-2" />
+            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg">
+              <span className="material-symbols-outlined text-lg">support_agent</span>
+              Support
+            </button>
+            <img
+              alt="Admin avatar"
+              className="w-8 h-8 rounded-full border border-slate-200 ml-2"
+              src="https://i.pravatar.cc/100?img=12"
+            />
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="pt-16 flex-1 flex flex-col items-center">
+          <div className="w-full max-w-[1600px] px-6 py-10 flex-1 flex flex-col">
+            {/* Title Block */}
             <div className="mb-10">
-              <h1 className="text-2xl font-bold mb-2">
-                Bước 3: Cấu hình sơ đồ ghế
-              </h1>
+              <h1 className="text-2xl font-bold mb-2 text-on-surface">Cấu hình sơ đồ ghế</h1>
               <p className="text-slate-500">
-                Tự động tạo ghế theo hàng và cột cho sự kiện{" "}
-                <span className="font-semibold text-slate-700">
-                  {event_name}
-                </span>
-                .
+                Thiết kế vị trí ghế và thiết lập hạng vé cho từng khu vực của sự kiện.
               </p>
             </div>
 
-            <div className="mb-12">
-              <div className="flex items-center justify-between">
-                <Step done label="Thông tin chung" />
-                <div className="flex-1 h-0.5 bg-red-600 mx-4 -mt-6" />
-                <Step done label="Thời gian & Địa điểm" />
-                <div className="flex-1 h-0.5 bg-red-600 mx-4 -mt-6" />
-                <Step active label="Cấu hình vé" number="3" />
+            {/* Step Progress Bar */}
+            <div className="mb-12 bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
+              <div className="flex items-center justify-between max-w-4xl mx-auto">
+                <Step number="1" label="Thông tin chung" completed />
+                <div className="flex-1 h-0.5 bg-red-700 mx-4 -mt-6" />
+                <Step number="2" label="Thời gian & Địa điểm" completed />
+                <div className="flex-1 h-0.5 bg-red-700 mx-4 -mt-6" />
+                <Step number="3" label="Cấu hình vé" active />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-              <div className="xl:col-span-1 bg-white border rounded-xl shadow-sm p-5 h-fit">
-                <h3 className="text-lg font-bold mb-5">Cài đặt ghế</h3>
+            {/* Editor Container */}
+            <div className="flex-1 flex gap-6 min-h-[600px] mb-10">
+              {/* Interactive Map Workspace */}
+              <div className="flex-1 relative bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col shadow-xl">
+                {/* Drawing Toolbar */}
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2 p-2 bg-white rounded-xl shadow-xl border border-zinc-100">
 
-                <div className="space-y-4">
-                  <FormField label="Số hàng">
-                    <input
-                      type="number"
-                      min="1"
-                      max="26"
-                      value={config.rows}
-                      onChange={(e) => updateConfig("rows", e.target.value)}
-                      className="w-full mt-1 px-3 py-2 border rounded-lg"
-                    />
-                  </FormField>
+                  <div className="w-8 h-[1px] bg-zinc-100 mx-auto"></div>
 
-                  <FormField label="Số cột">
-                    <input
-                      type="number"
-                      min="1"
-                      max="30"
-                      value={config.cols}
-                      onChange={(e) => updateConfig("cols", e.target.value)}
-                      className="w-full mt-1 px-3 py-2 border rounded-lg"
-                    />
-                  </FormField>
-
-                  <FormField label="Số dãy ghế VIP">
-                    <input
-                      type="number"
-                      min="0"
-                      max={config.rows}
-                      value={config.vipRows}
-                      onChange={(e) => updateConfig("vipRows", e.target.value)}
-                      className="w-full mt-1 px-3 py-2 border rounded-lg"
-                    />
-                  </FormField>
-
-                  <FormField label="Số dãy ghế thường">
-                    <input
-                      type="number"
-                      min="0"
-                      max={config.rows}
-                      value={config.standardRows}
-                      onChange={(e) =>
-                        updateConfig("standardRows", e.target.value)
-                      }
-                      className="w-full mt-1 px-3 py-2 border rounded-lg"
-                    />
-                  </FormField>
-
-                  <FormField label="Giá vé VIP">
-                    <input
-                      type="number"
-                      min="0"
-                      step="50000"
-                      value={config.vipPrice}
-                      onChange={(e) => updateConfig("vipPrice", e.target.value)}
-                      className="w-full mt-1 px-3 py-2 border rounded-lg"
-                    />
-                  </FormField>
-
-                  <FormField label="Giá vé thường">
-                    <input
-                      type="number"
-                      min="0"
-                      step="50000"
-                      value={config.standardPrice}
-                      onChange={(e) =>
-                        updateConfig("standardPrice", e.target.value)
-                      }
-                      className="w-full mt-1 px-3 py-2 border rounded-lg"
-                    />
-                  </FormField>
-                </div>
-
-                <div className="mt-6 pt-5 border-t space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Tổng ghế:</span>
-                    <b>{seats.length}</b>
-                  </div>
-                  <div className="flex justify-between text-red-700">
-                    <span>Ghế VIP:</span>
-                    <b>{vipSeats}</b>
-                  </div>
-                  <div className="flex justify-between text-blue-700">
-                    <span>Ghế thường:</span>
-                    <b>{standardSeats}</b>
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="mt-5 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                    {error}
-                  </div>
-                )}
-
-                <div className="mt-6 space-y-3">
                   <button
-                    type="button"
-                    onClick={handleBack}
-                    className="w-full border py-3 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
+                    onClick={() => addSection('rectangle')}
+                    className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-red-50 hover:text-primary transition-colors ${selectedSection?.shape === 'rectangle' ? 'bg-red-50 text-primary' : 'text-zinc-600'}`}
                   >
-                    Quay lại
+                    <span className="material-symbols-outlined">rectangle</span>
                   </button>
 
                   <button
-                    type="button"
-                    onClick={handleFinish}
-                    disabled={loading}
-                    className="w-full bg-red-700 text-white py-3 rounded-lg font-semibold hover:bg-red-800 transition-colors disabled:opacity-60"
+                    onClick={() => addSection('arc')}
+                    className={`w-10 h-10 flex items-center justify-center rounded-lg hover:bg-red-50 hover:text-primary transition-colors ${selectedSection?.shape === 'arc' ? 'bg-red-50 text-primary' : 'text-zinc-600'}`}
                   >
-                    {loading ? "Đang lưu..." : "Hoàn tất tạo sự kiện"}
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path d="M4 18c0-4.418 3.582-8 8-8s8 3.582 8 8" strokeLinecap="round"></path>
+                    </svg>
                   </button>
-                </div>
-              </div>
 
-              <div className="xl:col-span-3 bg-slate-50 border rounded-xl p-6 overflow-auto">
-                <div className="flex flex-col items-center">
-                  <div className="mb-8 flex justify-center">
-                    <div className="w-[520px] max-w-full bg-slate-900 text-white text-center py-4 rounded-b-[60px] font-black tracking-widest shadow-lg">
-                      MÀN HÌNH / SÂN KHẤU
+
+                </div>
+
+                {/* Canvas */}
+                <div className="flex-1 canvas-grid relative overflow-auto p-20 flex items-center justify-center bg-slate-50/30">
+                  {/* Centered Stage Reference Point */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="px-10 py-4 bg-zinc-900 text-white rounded-lg text-sm font-black tracking-widest uppercase shadow-2xl border-2 border-white/20 z-0 pointer-events-auto select-none">
+                      {draftEventName} / SÂN KHẤU
                     </div>
                   </div>
 
-                  <div className="w-full flex justify-center">
-                    <div className="space-y-3 max-w-fit">
-                      {Array.from({ length: config.rows }).map((_, rowIndex) => {
-                        const rowLabel = rowName(rowIndex);
-                        const isVip = rowIndex < config.vipRows;
+                  {/* Interactive Drawing Layer (Placeholder for seats/shapes) */}
+                  <div className="relative w-full h-full pointer-events-none">
+                    {sections.filter(s => s.floor === activeFloor).map((sec) => (
+                      <div
+                        key={sec.id}
+                        onMouseDown={(e) => handleMouseDown(e, sec.id)}
+                        className={`absolute p-4 rounded-xl transition-all pointer-events-auto select-none ${selectedSectionId === sec.id
+                          ? "border-2 border-primary bg-white/50 backdrop-blur-sm shadow-lg ring-2 ring-red-100"
+                          : "border-0"
+                          } ${sec.shape === 'arc' ? 'rounded-t-full' : 'rounded-xl'}`}
+                        style={{
+                          left: sec.x,
+                          top: sec.y,
+                          transform: `rotate(${sec.rotation}deg)`,
+                          width: sec.shape === 'arc' ? `${(60 + ((sec.rows - 1) * 10)) * 2 + 60}px` : 'auto',
+                          height: sec.shape === 'arc' ? `${(60 + ((sec.rows - 1) * 10)) + 60}px` : 'auto',
+                        }}
+                      >
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-zinc-800 text-white text-[10px] font-bold rounded uppercase tracking-tighter whitespace-nowrap shadow-sm z-10">
+                          {sec.name} ({sec.type})
+                        </div>
 
-                        return (
-                          <div key={rowLabel} className="flex items-center gap-3">
-                            <div className="w-8 text-sm font-bold text-slate-500 text-center">
-                              {rowLabel}
-                            </div>
+                        {sec.shape === 'rectangle' ? (
+                          <div
+                            className="grid gap-1"
+                            style={{
+                              gridTemplateColumns: `repeat(${sec.cols}, minmax(0, 1fr))`
+                            }}
+                          >
+                            {Array.from({ length: sec.rows * sec.cols }).map((_, i) => (
+                              <div
+                                key={i}
+                                className={`seat-manual shadow-sm ${sec.shape === 'rectangle' ? 'bg-blue-600' : 'bg-red-600'}`}
+                              ></div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="absolute inset-0 flex items-start justify-center pt-10">
+                            {/* Curved Seats Representation */}
+                            <div className="relative w-full h-full overflow-visible">
+                              {Array.from({ length: sec.rows }).map((_, r) => (
+                                <React.Fragment key={r}>
+                                  {Array.from({ length: sec.cols }).map((_, i) => {
+                                    const total = sec.cols;
+                                    const angleSpread = 120 + (r * 10);
+                                    const angleStep = angleSpread / (total - 1 || 1);
+                                    const startAngle = -angleSpread / 2;
+                                    const angle = startAngle + (i * angleStep);
+                                    const radius = 60 + (r * 15);
+                                    const maxRadius = 60 + ((sec.rows - 1) * 15);
 
-                            <div
-                              className="grid gap-2"
-                              style={{
-                                gridTemplateColumns: `repeat(${config.cols}, minmax(32px, 1fr))`,
-                              }}
-                            >
-                              {Array.from({ length: config.cols }).map(
-                                (_, colIndex) => (
-                                  <div
-                                    key={colIndex}
-                                    className={`w-8 h-8 rounded-md flex items-center justify-center text-xs ${
-                                      isVip
-                                        ? "bg-red-100 text-red-700 border border-red-300"
-                                        : "bg-blue-100 text-blue-700 border border-blue-300"
-                                    }`}
-                                  >
-                                    {colIndex + 1}
-                                  </div>
-                                )
-                              )}
+                                    const rx = Math.sin(angle * Math.PI / 180) * radius;
+                                    // Center vertically relative to maxRadius
+                                    const ry = -Math.cos(angle * Math.PI / 180) * radius + maxRadius;
+
+                                    return (
+                                      <div
+                                        key={`${r}-${i}`}
+                                        className={`seat-manual shadow-sm absolute left-1/2 ${sec.shape === 'rectangle' ? 'bg-blue-600' : 'bg-red-600'}`}
+                                        style={{
+                                          transform: `translate(${rx - 7}px, ${ry}px) rotate(${angle}deg)`,
+                                        }}
+                                      ></div>
+                                    );
+                                  })}
+                                </React.Fragment>
+                              ))}
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
+                </div>
 
-                  <div className="mt-8 flex items-center justify-center gap-6 text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-red-100 border border-red-300 rounded" />
-                      VIP
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded" />
-                      Ghế thường
-                    </div>
+                {/* Canvas Footer Controls */}
+                <div className="p-4 bg-white border-t border-zinc-200 flex justify-end items-center">
+                  {/* Floors Selection */}
+                  <div className="flex bg-slate-50 p-1 rounded-xl border border-zinc-100">
+                    {floors.map(floor => (
+                      <button 
+                        key={floor}
+                        onClick={() => setActiveFloor(floor)}
+                        className={`px-4 py-1.5 text-[11px] font-bold rounded-lg transition-all ${activeFloor === floor ? 'bg-white text-primary shadow-sm' : 'text-zinc-400 hover:text-zinc-600'}`}
+                      >
+                        {floor}
+                      </button>
+                    ))}
+                    <button 
+                      onClick={addFloor}
+                      className="px-2 py-1.5 text-zinc-400 hover:text-primary transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-sm">add</span>
+                    </button>
                   </div>
                 </div>
               </div>
+
+              {/* Property Panel */}
+              <aside className="w-80 bg-white rounded-2xl border border-slate-200 shadow-xl flex flex-col overflow-hidden">
+                <div className="p-4 border-b border-zinc-200 bg-zinc-50/50">
+                  <h2 className="text-sm font-black uppercase tracking-tight text-on-surface">
+                    Cài đặt thuộc tính
+                  </h2>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                  {/* Section: Floor Selection */}
+                  <div className="space-y-3 pb-6 border-b border-zinc-100">
+                    <div className="flex items-center justify-between">
+                      <label className="text-label-sm text-zinc-500 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-lg">
+                          layers
+                        </span>
+                        Quản lý tầng
+                      </label>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {floors.map(f => (
+                        <div key={f} className="group relative">
+                          <button
+                            onClick={() => setActiveFloor(f)}
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${activeFloor === f ? 'bg-red-700 text-white shadow-sm shadow-red-100' : 'bg-slate-50 text-zinc-500 hover:bg-zinc-100'}`}
+                          >
+                            {f}
+                          </button>
+                          {activeFloor === f && floors.length > 1 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteFloor(f); }}
+                              className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-red-200 text-red-600 rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <span className="material-symbols-outlined text-[12px]">close</span>
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button 
+                        onClick={addFloor}
+                        className="w-8 h-8 rounded-lg border border-dashed border-zinc-300 text-zinc-400 hover:border-red-700 hover:text-red-700 transition-all flex items-center justify-center"
+                      >
+                        <span className="material-symbols-outlined text-sm">add</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Section: Area Properties */}
+                  {selectedSection ? (
+                    <div className="space-y-6 pt-4">
+                      <div className="space-y-3">
+                        <label className="text-label-sm text-zinc-500 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-lg">
+                            edit_square
+                          </span>
+                          Thuộc tính khu vực
+                        </label>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase">
+                              Tên khu vực
+                            </p>
+
+                            <input
+                              className="w-full bg-slate-50 border-zinc-200 rounded-lg text-sm font-semibold focus:ring-primary focus:border-primary px-3 py-2"
+                              type="text"
+                              value={selectedSection.name}
+                              onChange={(e) => updateSection(selectedSection.id, { name: e.target.value })}
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase">
+                              Hạng vé
+                            </p>
+
+                            <input
+                              className="w-full bg-slate-50 border-zinc-200 rounded-lg text-sm font-semibold focus:ring-primary focus:border-primary px-3 py-2"
+                              type="text"
+                              placeholder="VD: VIP, Standard..."
+                              value={selectedSection.type}
+                              onChange={(e) => updateSection(selectedSection.id, { type: e.target.value })}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1 pt-2">
+                          <p className="text-[10px] font-bold text-zinc-400 uppercase">
+                            Giá vé (VNĐ)
+                          </p>
+
+                          <input
+                            className="w-full bg-slate-50 border-zinc-200 rounded-lg text-sm font-semibold focus:ring-primary focus:border-primary px-3 py-2"
+                            type="number"
+                            value={selectedSection.price}
+                            onChange={(e) => updateSection(selectedSection.id, { price: parseInt(e.target.value) || 0 })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-4 border-t border-zinc-100">
+                        <label className="text-label-sm text-zinc-500 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-lg">
+                            grid_view
+                          </span>
+                          Cấu hình khối ghế
+                        </label>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase">
+                              Số hàng ghế
+                            </p>
+
+                            <input
+                              className="w-full h-9 bg-slate-50 border-zinc-200 rounded-lg text-sm font-semibold focus:ring-primary focus:border-primary px-3"
+                              type="number"
+                              min="1"
+                              max="10"
+                              value={selectedSection.rows}
+                              onChange={(e) => updateSection(selectedSection.id, { rows: parseInt(e.target.value) || 1 })}
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase">
+                              {selectedSection.shape === 'rectangle' ? 'Số ghế mỗi hàng' : 'Số ghế / vòng cung'}
+                            </p>
+
+                            <input
+                              className="w-full h-9 bg-slate-50 border-zinc-200 rounded-lg text-sm font-semibold focus:ring-primary focus:border-primary px-3"
+                              type="number"
+                              min="1"
+                              max="30"
+                              value={selectedSection.cols}
+                              onChange={(e) => updateSection(selectedSection.id, { cols: parseInt(e.target.value) || 1 })}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 mt-2">
+                          <div className="flex justify-between text-[10px] font-bold text-zinc-400 uppercase">
+                            <span>Xoay hướng</span>
+                            <span className="text-zinc-600">{selectedSection.rotation}°</span>
+                          </div>
+
+                          <input
+                            className="w-full h-1.5 bg-zinc-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                            max="360"
+                            min="0"
+                            type="range"
+                            value={selectedSection.rotation}
+                            onChange={(e) => updateSection(selectedSection.id, { rotation: parseInt(e.target.value) })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-4">
+                        <button
+                          onClick={() => deleteSection(selectedSection.id)}
+                          className="w-full py-2 text-[11px] font-bold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <span className="material-symbols-outlined text-sm">delete</span>
+                          Xóa khu vực này
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-64 text-zinc-400 space-y-2">
+                      <span className="material-symbols-outlined text-4xl opacity-20">touch_app</span>
+                      <p className="text-xs font-medium">Chọn một khu vực để chỉnh sửa</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="p-5 bg-white border-t border-zinc-200 space-y-4">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-xs font-bold text-zinc-400">
+                      TỔNG SỐ GHẾ:
+                    </span>
+                    <span className="text-lg font-black text-on-surface">
+                      {sections.reduce((acc, sec) => acc + (sec.rows * sec.cols), 0)}
+                    </span>
+                  </div>
+
+                  {error && (
+                    <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-[11px] font-medium leading-relaxed">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => navigate("/admin/events/create/step-2")}
+                      className="flex-1 py-3 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition-all"
+                    >
+                      Quay lại
+                    </button>
+                    <button
+                      onClick={handleFinish}
+                      disabled={loading}
+                      className="flex-[2] py-3 bg-red-700 text-white font-semibold rounded-lg shadow-lg shadow-red-700/20 hover:bg-red-800 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                      ) : null}
+                      Hoàn tất thiết kế
+                    </button>
+                  </div>
+                </div>
+              </aside>
             </div>
           </div>
+        </main>
+
+        {/* Abstract Event Background Pattern (Visual Only) */}
+        <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
+          <svg
+            className="absolute top-0 right-0 w-[800px] h-[800px] text-red-50/20 translate-x-1/2 -translate-y-1/4"
+            viewBox="0 0 200 200"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M44.7,-76.4C58.3,-69.2,70.1,-58,78.5,-44.6C86.9,-31.2,91.9,-15.6,90.4,-0.9C88.8,13.9,80.7,27.8,70.6,39.6C60.5,51.4,48.4,61.1,34.8,68.4C21.2,75.7,6,80.6,-8.7,79.1C-23.4,77.6,-37.6,69.7,-49.4,59.6C-61.2,49.5,-70.6,37.1,-76.3,23.3C-82,9.4,-84.1,-5.9,-80.4,-20.1C-76.7,-34.3,-67.2,-47.4,-54.9,-55.1C-42.6,-62.8,-27.5,-65.1,-13.3,-71C0.8,-76.9,15.1,-86.4,31.1,-83.6C47.1,-80.8,64.8,-65.7,44.7,-76.4Z"
+              fill="currentColor"
+              transform="translate(100 100)"
+            ></path>
+          </svg>
         </div>
-      </main>
-    </div>
-  );
-}
-
-function Step({ done, active, number, label }) {
-  return (
-    <div className="flex flex-col items-center z-10">
-      <div
-        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
-          done
-            ? "bg-red-700 text-white"
-            : active
-            ? "bg-red-700 text-white ring-4 ring-red-100"
-            : "bg-slate-100 text-slate-400 border border-slate-200"
-        }`}
-      >
-        {done ? (
-          <span className="material-symbols-outlined text-xl">check</span>
-        ) : (
-          number
-        )}
       </div>
-
-      <span
-        className={`mt-2 text-sm font-semibold ${
-          active || done ? "text-red-700" : "text-slate-400"
-        }`}
-      >
-        {label}
-      </span>
-    </div>
+    </>
   );
-}
+};
 
-function FormField({ label, children }) {
-  return (
-    <div>
-      <label className="text-sm font-semibold text-slate-700">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-export default CreateEventStep3;
+export default TicketRushSeatMapDesign;
