@@ -5,13 +5,12 @@ import { setCookie, getCookie, removeCookie } from "../../utils/cookieUtils";
 const Step = ({ number, label, active, completed }) => (
   <div className="flex flex-col items-center gap-2">
     <div
-      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
-        active
-          ? "bg-red-700 text-white shadow-lg ring-4 ring-red-50"
-          : completed
+      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${active
+        ? "bg-red-700 text-white shadow-lg ring-4 ring-red-50"
+        : completed
           ? "bg-red-700 text-white"
           : "bg-slate-100 text-slate-400"
-      }`}
+        }`}
     >
       {completed ? (
         <span className="material-symbols-outlined text-base">check</span>
@@ -20,9 +19,8 @@ const Step = ({ number, label, active, completed }) => (
       )}
     </div>
     <span
-      className={`text-xs font-bold whitespace-nowrap ${
-        active ? "text-red-700" : "text-slate-500"
-      }`}
+      className={`text-xs font-bold whitespace-nowrap ${active ? "text-red-700" : "text-slate-500"
+        }`}
     >
       {label}
     </span>
@@ -42,23 +40,8 @@ const TicketRushSeatMapDesign = () => {
   const [activeFloor, setActiveFloor] = useState("Tầng 1");
 
   // State for seat sections
-  const [sections, setSections] = useState([
-    {
-      id: "sec_1",
-      name: "Khu vực A",
-      type: "VIP",
-      price: 1000000,
-      rows: 2,
-      cols: 5,
-      x: 100,
-      y: 100,
-      rotation: 0,
-      shape: "rectangle",
-      floor: "Trệt",
-    }
-  ]);
-
-  const [selectedSectionId, setSelectedSectionId] = useState(sections[0]?.id);
+  const [sections, setSections] = useState([]);
+  const [selectedSectionId, setSelectedSectionId] = useState(null);
 
   const selectedSection = sections.find(s => s.id === selectedSectionId);
 
@@ -139,9 +122,12 @@ const TicketRushSeatMapDesign = () => {
 
   const handleMouseMove = useCallback((e) => {
     if (!draggingId) return;
-
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
+    const container = document.querySelector(".canvas-grid");
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    // Cộng thêm scrollLeft/scrollTop để tọa độ chính xác ngay cả khi cuộn chuột
+    const newX = e.clientX - rect.left + container.scrollLeft - dragOffset.x;
+    const newY = e.clientY - rect.top + container.scrollTop - dragOffset.y;
 
     setSections(prev => prev.map(sec =>
       sec.id === draggingId ? { ...sec, x: newX, y: newY } : sec
@@ -189,7 +175,7 @@ const TicketRushSeatMapDesign = () => {
             allSeats.push({
               floor: sec.floor,
               section: sec.name,
-              row: String.fromCharCode(64 + r), // A, B, C...
+              row: `${sec.id}-${r}`,
               seat_number: c,
               status: "available",
               seat_type: sec.type,
@@ -206,7 +192,23 @@ const TicketRushSeatMapDesign = () => {
         },
         body: JSON.stringify({
           showtime_id: draftShowtimeId,
-          seats: allSeats
+          seats: allSeats,
+          layoutData: sections.map(sec => {
+            const stage = document.getElementById("admin-stage");
+            const container = document.querySelector(".canvas-grid");
+            if (stage && container) {
+              const stageRect = stage.getBoundingClientRect();
+              const containerRect = container.getBoundingClientRect();
+              const centerX = (stageRect.left + stageRect.width / 2) - containerRect.left + container.scrollLeft;
+              const centerY = (stageRect.top + stageRect.height / 2) - containerRect.top + container.scrollTop;
+              return {
+                ...sec,
+                x: sec.x - centerX,
+                y: sec.y - centerY
+              };
+            }
+            return sec;
+          })
         })
       });
 
@@ -386,7 +388,7 @@ const TicketRushSeatMapDesign = () => {
                 <div className="flex-1 canvas-grid relative overflow-auto p-20 flex items-center justify-center bg-slate-50/30">
                   {/* Centered Stage Reference Point */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="px-10 py-4 bg-zinc-900 text-white rounded-lg text-sm font-black tracking-widest uppercase shadow-2xl border-2 border-white/20 z-0 pointer-events-auto select-none">
+                    <div id="admin-stage" className="px-10 py-4 bg-zinc-900 text-white rounded-lg text-sm font-black tracking-widest uppercase shadow-2xl border-2 border-white/20 z-0 pointer-events-auto select-none">
                       {draftEventName} / SÂN KHẤU
                     </div>
                   </div>
@@ -405,15 +407,15 @@ const TicketRushSeatMapDesign = () => {
                           left: sec.x,
                           top: sec.y,
                           transform: `rotate(${sec.rotation}deg)`,
-                          width: sec.shape === 'arc' ? `${(60 + ((sec.rows - 1) * 10)) * 2 + 60}px` : 'auto',
-                          height: sec.shape === 'arc' ? `${(60 + ((sec.rows - 1) * 10)) + 60}px` : 'auto',
+                          width: sec.shape === 'arc' ? `${(60 + ((sec.rows - 1) * 15)) * 2 + 40}px` : 'auto',
+                          height: sec.shape === 'arc' ? `${(60 + ((sec.rows - 1) * 15)) + 60}px` : 'auto'
                         }}
                       >
                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-zinc-800 text-white text-[10px] font-bold rounded uppercase tracking-tighter whitespace-nowrap shadow-sm z-10">
                           {sec.name} ({sec.type})
                         </div>
 
-                        {sec.shape === 'rectangle' ? (
+                        {sec.shape === "rectangle" ? (
                           <div
                             className="grid gap-1"
                             style={{
@@ -443,15 +445,15 @@ const TicketRushSeatMapDesign = () => {
                                     const maxRadius = 60 + ((sec.rows - 1) * 15);
 
                                     const rx = Math.sin(angle * Math.PI / 180) * radius;
-                                    // Center vertically relative to maxRadius
                                     const ry = -Math.cos(angle * Math.PI / 180) * radius + maxRadius;
 
                                     return (
                                       <div
                                         key={`${r}-${i}`}
-                                        className={`seat-manual shadow-sm absolute left-1/2 ${sec.shape === 'rectangle' ? 'bg-blue-600' : 'bg-red-600'}`}
+                                        className={`absolute w-3 h-3 rounded-[2px] ${sec.type === "VIP" ? "bg-[#0053b7]" : "bg-[#b30004]"}`}
                                         style={{
-                                          transform: `translate(${rx - 7}px, ${ry}px) rotate(${angle}deg)`,
+                                          left: "50%",
+                                          transform: `translate(${rx - 6}px, ${ry}px) rotate(${angle}deg)`,
                                         }}
                                       ></div>
                                     );
@@ -471,7 +473,7 @@ const TicketRushSeatMapDesign = () => {
                   {/* Floors Selection */}
                   <div className="flex bg-slate-50 p-1 rounded-xl border border-zinc-100">
                     {floors.map(floor => (
-                      <button 
+                      <button
                         key={floor}
                         onClick={() => setActiveFloor(floor)}
                         className={`px-4 py-1.5 text-[11px] font-bold rounded-lg transition-all ${activeFloor === floor ? 'bg-white text-primary shadow-sm' : 'text-zinc-400 hover:text-zinc-600'}`}
@@ -479,7 +481,7 @@ const TicketRushSeatMapDesign = () => {
                         {floor}
                       </button>
                     ))}
-                    <button 
+                    <button
                       onClick={addFloor}
                       className="px-2 py-1.5 text-zinc-400 hover:text-primary transition-colors"
                     >
@@ -528,7 +530,7 @@ const TicketRushSeatMapDesign = () => {
                           )}
                         </div>
                       ))}
-                      <button 
+                      <button
                         onClick={addFloor}
                         className="w-8 h-8 rounded-lg border border-dashed border-zinc-300 text-zinc-400 hover:border-red-700 hover:text-red-700 transition-all flex items-center justify-center"
                       >

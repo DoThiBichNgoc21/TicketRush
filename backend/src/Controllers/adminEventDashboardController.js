@@ -14,7 +14,19 @@ export const getEvents = async (req, res) => {
     }
 
     if (status) {
-      query = query.eq("status", status);
+      const now = new Date();
+      const todayStart = new Date(now.setHours(0, 0, 0, 0)).toISOString();
+      const todayEnd = new Date(now.setHours(23, 59, 59, 999)).toISOString();
+
+      if (status === "ongoing") {
+        query = query.eq("status", "published").gte("date", todayStart).lte("date", todayEnd);
+      } else if (status === "upcoming") {
+        query = query.eq("status", "published").gt("date", todayEnd);
+      } else if (status === "ended") {
+        query = query.or(`status.eq.ended,date.lt.${todayStart}`);
+      } else {
+        query = query.eq("status", status);
+      }
     }
 
     if (category) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { getEvents, toggleEventVisibility } from "../../api/eventApi";
+import { getEvents, toggleEventVisibility, updateEvent } from "../../api/eventApi";
 import { useNavigate } from "react-router-dom";
 
 
@@ -16,58 +16,98 @@ const formatDate = (value) => {
   });
 };
 
-const getStatusLabel = (status) => {
+const getCalculatedStatus = (event) => {
+  if (!event) return "unknown";
+  if (event.status === "cancelled") return "cancelled";
+  if (event.status === "draft") return "draft";
+
+  const now = new Date();
+  const eventDate = new Date(event.date);
+  const todayStart = new Date(now.setHours(0, 0, 0, 0));
+  const todayEnd = new Date(now.setHours(23, 59, 59, 999));
+
+  if (event.status === "ended" || eventDate < todayStart) return "ended";
+  if (eventDate >= todayStart && eventDate <= todayEnd) return "ongoing";
+  if (eventDate > todayEnd) return "upcoming";
+
+  return event.status || "unknown";
+};
+
+const getStatusLabel = (event) => {
+  const status = getCalculatedStatus(event);
   switch (status) {
-    case "published":
-      return "Đang bán vé";
-    case "draft":
-      return "Bản nháp";
-    case "cancelled":
-      return "Đã hủy";
+    case "ongoing":
+      return "ĐANG DIỄN RA";
+    case "upcoming":
+      return "SẮP DIỄN RA";
     case "ended":
-      return "Đã kết thúc";
+      return "ĐÃ KẾT THÚC";
+    case "draft":
+      return "BẢN NHÁP";
+    case "cancelled":
+      return "ĐÃ HỦY";
     default:
-      return status || "Chưa rõ";
+      return "CHƯA RÕ";
   }
 };
 
-const getStatusClass = (status) => {
+const getStatusClass = (event) => {
+  const status = getCalculatedStatus(event);
   switch (status) {
-    case "published":
+    case "ongoing":
       return "bg-green-100 text-green-700";
+    case "upcoming":
+      return "bg-blue-100 text-blue-700";
+    case "ended":
+      return "bg-zinc-100 text-zinc-600";
     case "draft":
       return "bg-amber-100 text-amber-700";
     case "cancelled":
       return "bg-red-100 text-red-700";
-    case "ended":
-      return "bg-zinc-100 text-zinc-600";
     default:
       return "bg-zinc-100 text-zinc-600";
   }
 };
 
-const getDotClass = (status) => {
+const getDotClass = (event) => {
+  const status = getCalculatedStatus(event);
   switch (status) {
-    case "published":
+    case "ongoing":
       return "bg-green-500";
+    case "upcoming":
+      return "bg-blue-500";
+    case "ended":
+      return "bg-zinc-400";
     case "draft":
       return "bg-amber-500";
     case "cancelled":
       return "bg-red-500";
-    case "ended":
-      return "bg-zinc-400";
     default:
       return "bg-zinc-400";
   }
 };
 
 export default function AdminEvents() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const [events, setEvents] = useState([]);
   const [search, setSearch] = useState("");
   const [activeStatus, setActiveStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [globalStats, setGlobalStats] = useState({ total: 0, published: 0 });
+
+  const fetchGlobalStats = async () => {
+    try {
+      const result = await getEvents(); // Fetch all events
+      const all = result.events || [];
+      setGlobalStats({
+        total: all.length,
+        published: all.filter((e) => e.status === "published").length,
+      });
+    } catch (error) {
+      console.error("Lỗi lấy thống kê tổng thể:", error);
+    }
+  };
 
   const fetchEvents = async () => {
     try {
@@ -87,16 +127,16 @@ export default function AdminEvents() {
   };
 
   useEffect(() => {
+    fetchGlobalStats();
+  }, []);
+
+  useEffect(() => {
     fetchEvents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStatus]);
 
-  const totalEvents = events.length;
-
-  const publishedEvents = useMemo(
-    () => events.filter((event) => event.status === "published").length,
-    [events]
-  );
+  const totalEvents = globalStats.total;
+  const publishedEvents = globalStats.published;
 
   const pendingEvents = useMemo(
     () => events.filter((event) => event.status === "draft").length,
@@ -158,58 +198,58 @@ export default function AdminEvents() {
       {/* SideNavBar */}
       <aside className="h-screen w-64 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 fixed left-0 top-0 z-50 flex flex-col py-6 space-y-2">
         <div className="px-6 mb-8">
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">Cổng Quản Trị</h1>
-            <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mt-1">TicketRush HQ</p>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Cổng Quản Trị</h1>
+          <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mt-1">TicketRush HQ</p>
         </div>
 
         <nav className="flex-1 space-y-1">
-            <button
+          <button
             onClick={() => navigate("/admin/dashboard")}
             className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
-            >
+          >
             <span className="material-symbols-outlined">dashboard</span>
             <span>Bảng điều khiển</span>
-            </button>
+          </button>
 
-            <button
+          <button
             onClick={() => navigate("/admin/events")}
             className="flex items-center w-full px-6 py-3 space-x-3 bg-red-50 text-red-600 border-l-4 border-red-600 active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
-            >
+          >
             <span className="material-symbols-outlined">calendar_today</span>
             <span>Sự kiện</span>
-            </button>
+          </button>
 
-            <button className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
+          <button className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
             <span className="material-symbols-outlined">group</span>
             <span>Người dùng</span>
-            </button>
+          </button>
 
-            <button className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
+          <button className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
             <span className="material-symbols-outlined">confirmation_number</span>
             <span>Vé</span>
-            </button>
+          </button>
 
-            <button className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
+          <button className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
             <span className="material-symbols-outlined">analytics</span>
             <span>Báo cáo</span>
-            </button>
+          </button>
         </nav>
 
         <div className="px-6 pt-6 border-t border-gray-200 space-y-1">
-            <button className="flex items-center w-full py-2 space-x-3 text-gray-600 hover:text-gray-900 transition-all font-sans font-medium text-sm text-left">
+          <button className="flex items-center w-full py-2 space-x-3 text-gray-600 hover:text-gray-900 transition-all font-sans font-medium text-sm text-left">
             <span className="material-symbols-outlined">help</span>
             <span>Hỗ trợ</span>
-            </button>
+          </button>
 
-            <button
+          <button
             onClick={() => navigate("/")}
             className="flex items-center w-full py-2 space-x-3 text-gray-600 hover:text-gray-900 transition-all font-sans font-medium text-sm text-left"
-            >
+          >
             <span className="material-symbols-outlined">logout</span>
             <span>Đăng xuất</span>
-            </button>
+          </button>
         </div>
-        </aside>
+      </aside>
 
       {/* Main Content */}
       <main className="ml-64 mt-16 p-8 concert-pattern min-h-screen">
@@ -226,10 +266,10 @@ export default function AdminEvents() {
               <button
                 onClick={() => navigate("/admin/events/create/step-1")}
                 className="bg-[#e00d0d] text-white px-6 py-2.5 rounded font-bold flex items-center gap-2 hover:bg-[#b30004] transition-all shadow-md active:scale-95"
-                >
+              >
                 <span className="material-symbols-outlined">add_circle</span>
                 Tạo sự kiện mới
-                </button>
+              </button>
             </div>
           </div>
 
@@ -295,47 +335,44 @@ export default function AdminEvents() {
               <div className="flex items-center gap-2 bg-zinc-100 p-1 rounded-lg w-fit">
                 <button
                   onClick={() => setActiveStatus("")}
-                  className={`px-4 py-2 rounded-md font-bold text-sm ${
-                    activeStatus === ""
+                  className={`px-4 py-2 rounded-md font-bold text-sm ${activeStatus === ""
                       ? "bg-white text-zinc-900 shadow-sm"
                       : "text-zinc-500 hover:text-zinc-900"
-                  }`}
+                    }`}
                 >
                   Tất cả
                 </button>
 
                 <button
-                  onClick={() => setActiveStatus("published")}
-                  className={`px-4 py-2 rounded-md font-semibold text-sm transition-colors ${
-                    activeStatus === "published"
+                  onClick={() => setActiveStatus("ongoing")}
+                  className={`px-4 py-2 rounded-md font-semibold text-sm transition-colors ${activeStatus === "ongoing"
                       ? "bg-white text-zinc-900 shadow-sm"
                       : "text-zinc-500 hover:text-zinc-900"
-                  }`}
+                    }`}
                 >
                   Đang diễn ra
                 </button>
 
                 <button
-                  onClick={() => setActiveStatus("draft")}
-                  className={`px-4 py-2 rounded-md font-semibold text-sm transition-colors ${
-                    activeStatus === "draft"
+                  onClick={() => setActiveStatus("upcoming")}
+                  className={`px-4 py-2 rounded-md font-semibold text-sm transition-colors ${activeStatus === "upcoming"
                       ? "bg-white text-zinc-900 shadow-sm"
                       : "text-zinc-500 hover:text-zinc-900"
-                  }`}
+                    }`}
                 >
                   Sắp diễn ra
                 </button>
 
                 <button
                   onClick={() => setActiveStatus("ended")}
-                  className={`px-4 py-2 rounded-md font-semibold text-sm transition-colors ${
-                    activeStatus === "ended"
+                  className={`px-4 py-2 rounded-md font-semibold text-sm transition-colors ${activeStatus === "ended"
                       ? "bg-white text-zinc-900 shadow-sm"
                       : "text-zinc-500 hover:text-zinc-900"
-                  }`}
+                    }`}
                 >
                   Đã kết thúc
                 </button>
+
               </div>
 
               <div className="flex items-center gap-3">
@@ -458,40 +495,31 @@ export default function AdminEvents() {
 
                         <td className="px-6 py-4">
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${getStatusClass(
-                              event.status
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold ${getStatusClass(
+                              event
                             )}`}
                           >
                             <span
                               className={`w-1.5 h-1.5 rounded-full mr-1.5 ${getDotClass(
-                                event.status
+                                event
                               )}`}
                             />
-                            {getStatusLabel(event.status)}
+                            {getStatusLabel(event)}
                           </span>
                         </td>
 
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={async () => {
-                                await toggleEventVisibility(
-                                  event.id,
-                                  !event.is_visible
-                                );
-                                fetchEvents();
-                              }}
+                              onClick={() => navigate(`/admin/events/${event.id}`)}
                               className="p-2 hover:bg-zinc-200 rounded text-zinc-500 transition-colors"
-                              title={
-                                event.is_visible
-                                  ? "Ẩn sự kiện"
-                                  : "Hiện sự kiện"
-                              }
+                              title="Xem chi tiết"
                             >
                               <span className="material-symbols-outlined text-xl">
                                 visibility
                               </span>
                             </button>
+
 
                             <button className="p-2 hover:bg-zinc-200 rounded text-zinc-500 transition-colors">
                               <span className="material-symbols-outlined text-xl">

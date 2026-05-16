@@ -106,7 +106,10 @@ export const createShowtimeStep2 = async (req, res) => {
 
 export const createSeatingChartStep3 = async (req, res) => {
     try {
-        const { showtime_id, seats } = req.body;
+        const { showtime_id, seats, layout, layoutData } = req.body;
+        const finalLayout = layoutData || layout;
+        
+        console.log("Keys nhận được trong body:", Object.keys(req.body));
 
         if (!showtime_id) {
             return res.status(400).json({
@@ -120,14 +123,23 @@ export const createSeatingChartStep3 = async (req, res) => {
             });
         }
 
-        await supabase
-            .from("seating_chart")
-            .delete()
-            .eq("showtime_id", showtime_id);
+        console.log(`Đang xử lý ${seats.length} ghế cho showtime_id: ${showtime_id}`);
+        
+        // Lọc trùng lặp ngay tại backend để bảo vệ database
+        const uniqueSeatsMap = new Map();
+        seats.forEach(s => {
+            const key = `${s.row}-${s.seat_number}`;
+            if (!uniqueSeatsMap.has(key)) {
+                uniqueSeatsMap.set(key, s);
+            }
+        });
+        
+        const filteredSeats = Array.from(uniqueSeatsMap.values());
+        console.log(`Sau khi lọc trùng: ${filteredSeats.length} ghế.`);
 
-        const seatData = seats.map((seat) => ({
+        const seatData = filteredSeats.map((seat) => ({
             showtime_id,
-            floor: seat.floor,
+            floor: seat.floor || 1,
             section: seat.section,
             row: seat.row,
             seat_number: seat.seat_number,
@@ -138,6 +150,17 @@ export const createSeatingChartStep3 = async (req, res) => {
             user_id: null
         }));
 
+        // Xóa các ghế cũ của showtime này trước khi chèn mới
+        const { error: deleteError } = await supabase
+            .from("seating_chart")
+            .delete()
+            .eq("showtime_id", showtime_id);
+            
+        if (deleteError) {
+            console.error("Lỗi xóa ghế cũ:", deleteError);
+            throw deleteError;
+        }
+
         const { data, error } = await supabase
             .from("seating_chart")
             .insert(seatData)
@@ -145,8 +168,32 @@ export const createSeatingChartStep3 = async (req, res) => {
 
         if (error) throw error;
 
+        // Tự động chuyển trạng thái sự kiện sang "published" và lưu bản thiết kế sơ đồ (layout_json)
+        const { event_id } = req.params;
+        console.log("Đang lưu sơ đồ cho sự kiện ID:", event_id);
+        
+        // Log an toàn
+        if (finalLayout) {
+            console.log("Có nhận được dữ liệu layout.");
+        } else {
+            console.log("CẢNH BÁO: finalLayout là undefined!");
+        }
+ 
+        const { error: statusError } = await supabase
+            .from("events")
+            .update({ 
+                status: "published",
+                layout_json: finalLayout || [] // Đảm bảo luôn có giá trị (mảng rỗng nếu null)
+            })
+            .eq("id", event_id);
+
+        if (statusError) {
+            console.error("Lỗi cập nhật layout_json:", statusError);
+            throw statusError;
+        }
+
         return res.status(201).json({
-            message: "Tạo sơ đồ ghế thành công",
+            message: "Tạo sơ đồ ghế và xuất bản sự kiện thành công",
             seats: data
         });
     } catch (error) {
