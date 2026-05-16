@@ -78,7 +78,11 @@ export function Header() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 font-semibold text-foreground hover:bg-slate-200/50">
-                    <User className="w-4 h-4" />
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt="Avatar" className="w-6 h-6 rounded-full object-cover" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
                     {user.first_name || user.username}
                     <ChevronDown className="w-3 h-3" />
                   </Button>
@@ -137,7 +141,19 @@ export function Header() {
               ))}
               {user ? (
                 <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border mt-2">
-                  <p className="text-sm font-medium text-foreground">{user.first_name || user.username} ({user.email})</p>
+                  <div className="flex items-center gap-3 mb-2">
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center text-muted-foreground">
+                        <User className="w-5 h-5" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-bold text-foreground">{user.first_name || user.username}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
                   <Button variant="outline" size="sm" className="w-full font-semibold" onClick={() => { navigate('/profile'); setMobileMenuOpen(false); }}>
                     Tài khoản
                   </Button>

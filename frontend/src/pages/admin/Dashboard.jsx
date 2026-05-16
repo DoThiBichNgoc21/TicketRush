@@ -10,6 +10,29 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    async function fetchEvents() {
+      setLoading(true);
+      try {
+        console.log('Admin: Fetching all events...');
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Admin Fetch Error:', error);
+          throw error;
+        }
+        
+        console.log('Admin Data:', data);
+        setEvents(data || []);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     const token = localStorage.getItem('admin_token');
     const raw = localStorage.getItem('admin_user');
     if (!token || !raw) {
@@ -24,29 +47,6 @@ export default function AdminDashboard() {
 
     fetchEvents();
   }, [navigate]);
-
-  async function fetchEvents() {
-    setLoading(true);
-    try {
-      console.log('Admin: Fetching all events...');
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Admin Fetch Error:', error);
-        throw error;
-      }
-      
-      console.log('Admin Data:', data);
-      setEvents(data || []);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
