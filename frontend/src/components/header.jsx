@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ChevronDown, Menu, X, User, Ticket, LogOut } from "lucide-react"
+import { ChevronDown, Menu, X, User, Ticket, LogOut, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { supabase } from "@/lib/supabaseClient"
+import { useDebounce } from "@/hooks/useDebounce"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +25,12 @@ const navLinks = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [user, setUser] = useState(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [showResults, setShowResults] = useState(false)
+  
+  const debouncedSearch = useDebounce(searchQuery, 300)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -35,6 +43,43 @@ export function Header() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    async function performSearch() {
+      if (!debouncedSearch || debouncedSearch.length < 2) {
+        setSearchResults([])
+        setShowResults(false)
+        return
+      }
+
+      setIsSearching(true)
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('id, name, image_url, location, date')
+          .or(`name.ilike.%${debouncedSearch}%,description.ilike.%${debouncedSearch}%,location.ilike.%${debouncedSearch}%`)
+          .limit(5)
+
+        if (error) throw error
+        setSearchResults(data || [])
+        setShowResults(true)
+      } catch (err) {
+        console.error("Search error:", err)
+      } finally {
+        setIsSearching(false)
+      }
+    }
+
+    performSearch()
+  }, [debouncedSearch])
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      setShowResults(false)
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('user_token')
@@ -58,6 +103,70 @@ export function Header() {
               <p className="text-xs font-medium text-muted-foreground -mt-1">Vé điện tử trực tuyến</p>
             </div>
           </Link>
+
+          {/* Search Bar - Desktop */}
+          <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
+            <form onSubmit={handleSearchSubmit} className="w-full relative">
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm sự kiện, nghệ sĩ, địa điểm..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
+                  className="w-full bg-slate-100 border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                />
+              </div>
+
+              {/* Quick Search Results Dropdown */}
+              {showResults && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-2xl overflow-hidden z-[100]">
+                  <div className="p-2">
+                    {isSearching ? (
+                      <div className="p-4 text-center text-sm text-muted-foreground">Đang tìm kiếm...</div>
+                    ) : searchResults.length > 0 ? (
+                      <>
+                        <p className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Kết quả nhanh</p>
+                        {searchResults.map((event) => (
+                          <button
+                            key={event.id}
+                            onClick={() => {
+                              navigate(`/event/${event.id}`)
+                              setShowResults(false)
+                              setSearchQuery("")
+                            }}
+                            className="w-full flex items-center gap-3 p-2 hover:bg-secondary rounded-lg transition-colors text-left"
+                          >
+                            <div className="w-10 h-10 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                              {event.image_url ? (
+                                <img src={event.image_url} alt={event.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <Ticket className="w-5 h-5 m-auto text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold truncate">{event.name}</p>
+                              <p className="text-[10px] text-muted-foreground truncate">{event.location}</p>
+                            </div>
+                          </button>
+                        ))}
+                        <button 
+                          onClick={handleSearchSubmit}
+                          className="w-full p-2 mt-2 text-center text-xs font-bold text-primary hover:bg-primary/5 rounded-lg border-t border-border"
+                        >
+                          Xem tất cả kết quả
+                        </button>
+                      </>
+                    ) : (
+                      <div className="p-4 text-center text-sm text-muted-foreground">Không tìm thấy kết quả</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </form>
+            {showResults && <div className="fixed inset-0 z-[-1]" onClick={() => setShowResults(false)} />}
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex h-16 items-center gap-6">
@@ -128,6 +237,19 @@ export function Header() {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="lg:hidden py-4 border-t border-border bg-slate-50/95">
+            {/* Mobile Search */}
+            <div className="px-4 mb-4">
+              <form onSubmit={handleSearchSubmit} className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-100 border-none rounded-lg py-2 pl-10 pr-4 text-sm outline-none"
+                />
+              </form>
+            </div>
             <nav className="flex flex-col gap-2">
               {navLinks.map((link) => (
                 <Link

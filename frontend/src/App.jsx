@@ -9,6 +9,7 @@ import UserEventsPage from './pages/user/EventsPage';
 import EventDetailPage from './pages/user/EventDetailPage';
 import BookingPage from './pages/user/BookingPage';
 import ProfilePage from './pages/user/Profile';
+import SearchPage from './pages/user/SearchPage';
 import { Toaster } from './components/ui/sonner';
 import './index.css';
 
@@ -23,6 +24,7 @@ function App() {
         <Route path="/event/:id" element={<EventDetailPage />} />
         <Route path="/booking/:showtimeId" element={<BookingPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/search" element={<SearchPage />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/register" element={<AdminRegister />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
