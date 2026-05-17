@@ -161,7 +161,7 @@ export default function EventDetail() {
         .tr-frame-content {
             padding: 40px;
             display: grid;
-            grid-template-columns: 1fr 350px;
+            grid-template-columns: 1fr 400px;
             gap: 40px;
         }
 
@@ -307,15 +307,31 @@ export default function EventDetail() {
                         Quay lại danh sách
                     </div>
 
-                    <div className="tr-header-content">
-                        <div>
-                            <div className="tr-meta-row">
-                                <span className="tr-event-id">ID: {String(event.id).slice(0, 8)}</span>
-                                <span className={`tr-status-badge ${event.status === 'published' ? 'tr-status-published' : 'tr-status-draft'}`}>
-                                    {event.status === 'published' ? 'Đang hoạt động' : 'Bản nháp'}
-                                </span>
+                    <div className="tr-header-content" style={{ alignItems: 'flex-end' }}>
+                        <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-end' }}>
+                            {event.image_url && (
+                                <img 
+                                    src={event.image_url} 
+                                    alt={event.name} 
+                                    style={{ 
+                                        width: '280px', 
+                                        aspectRatio: '16/9', 
+                                        borderRadius: '16px', 
+                                        objectFit: 'cover', 
+                                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                                        border: '1px solid rgba(0,0,0,0.08)'
+                                    }} 
+                                />
+                            )}
+                            <div style={{ paddingBottom: '4px' }}>
+                                <div className="tr-meta-row">
+                                    <span className="tr-event-id">ID: {String(event.id).slice(0, 8)}</span>
+                                    <span className={`tr-status-badge ${event.status === 'published' ? 'tr-status-published' : 'tr-status-draft'}`}>
+                                        {event.status === 'published' ? 'Đang hoạt động' : 'Bản nháp'}
+                                    </span>
+                                </div>
+                                <h2 className="tr-title">{event.name}</h2>
                             </div>
-                            <h2 className="tr-title">{event.name}</h2>
                         </div>
 
                         <div className="tr-actions">
@@ -333,96 +349,27 @@ export default function EventDetail() {
 
                 {/* Content Section */}
                 <div className="tr-frame-content">
-                    {/* Left Column */}
+                    {/* Left Column (Sơ đồ ghế) */}
                     <div className="tr-main-info">
-                        <h4 className="tr-section-title">Thông tin chi tiết</h4>
-
-                        <div className="tr-info-grid">
-                            <div className="tr-info-card">
-                                <div className="tr-info-icon">
-                                    <span className="material-symbols-outlined">calendar_today</span>
-                                </div>
-                                <div>
-                                    <div className="tr-info-label">Ngày & Giờ</div>
-                                    <div className="tr-info-val">{formatDate(event.date)}</div>
-                                    <div className="tr-info-val" style={{ fontWeight: 400, color: 'var(--tr-secondary)', fontSize: '14px' }}>
-                                        {new Date(event.date).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="tr-info-card">
-                                <div className="tr-info-icon">
-                                    <span className="material-symbols-outlined">location_on</span>
-                                </div>
-                                <div>
-                                    <div className="tr-info-label">Địa điểm</div>
-                                    <div className="tr-info-val">{event.location?.split(',')[0]}</div>
-                                    <div className="tr-info-val" style={{ fontWeight: 400, color: 'var(--tr-secondary)', fontSize: '14px' }}>
-                                        {event.location}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h4 className="tr-section-title">Mô tả sự kiện</h4>
-                        <div className="tr-desc-text">
-                            {event.description || "Chưa có mô tả cho sự kiện này."}
-                        </div>
-
-                        <div className="tr-table-container">
-                            <h4 className="tr-section-title">Hạng vé & Trạng thái</h4>
-                            <table className="tr-table">
-                                <thead>
-                                    <tr>
-                                        <th>Loại vé</th>
-                                        <th>Giá</th>
-                                        <th>Số lượng</th>
-                                        <th>Đã bán</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><strong>VIP Diamond</strong></td>
-                                        <td>2.500.000đ</td>
-                                        <td>500</td>
-                                        <td>485</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>VIP Gold</strong></td>
-                                        <td>1.800.000đ</td>
-                                        <td>1.500</td>
-                                        <td>1.200</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Standard</strong></td>
-                                        <td>900.000đ</td>
-                                        <td>8.000</td>
-                                        <td>7.415</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    {/* Right Sidebar */}
-                    <aside className="tr-sidebar">
-                        <div className="tr-sidebar-box">
+                        <div className="tr-sidebar-box" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                             <h4 className="tr-section-title" style={{ marginBottom: '16px' }}>Sơ đồ ghế</h4>
-                            <div className="tr-seat-preview-container tr-canvas-grid" style={{ height: '300px' }}>
+                            <div className="tr-seat-preview-container tr-canvas-grid" style={{ flex: 1, minHeight: '600px' }}>
                                 <div className="tr-mini-seating">
                                     {event.layout_json && (
                                         <div style={{
-                                            position: 'relative',
-                                            width: '100%',
-                                            height: '100%',
-                                            transform: 'scale(0.2)',
-                                            transformOrigin: 'center center',
+                                            position: 'absolute',
+                                            inset: 0,
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center'
                                         }}>
-                                            <div style={{ position: 'relative', width: '1200px', height: '800px' }}>
+                                            <div style={{ 
+                                                position: 'relative', 
+                                                width: '1200px', 
+                                                height: '800px',
+                                                transform: 'scale(0.65)',
+                                                transformOrigin: 'center center'
+                                            }}>
                                                 {(() => {
                                                     const layout = event.layout_json;
                                                     const sections = Array.isArray(layout) ? layout : (layout.sections || []);
@@ -434,25 +381,29 @@ export default function EventDetail() {
                                                                 left: 600,
                                                                 top: 400,
                                                                 transform: 'translate(-50%, -50%)',
-                                                                padding: '12px 60px',
+                                                                padding: '16px 40px',
                                                                 backgroundColor: '#18181b',
                                                                 color: 'white',
-                                                                fontWeight: 'bold',
-                                                                borderRadius: '6px',
-                                                                fontSize: '32px',
+                                                                fontWeight: '900',
+                                                                borderRadius: '8px',
+                                                                fontSize: '14px',
+                                                                letterSpacing: '0.1em',
+                                                                textTransform: 'uppercase',
                                                                 whiteSpace: 'nowrap',
                                                                 zIndex: 10,
-                                                                boxShadow: '0 4px 30px rgba(0,0,0,0.5)'
-                                                            }}>SÂN KHẤU</div>
+                                                                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                                                                border: '2px solid rgba(255, 255, 255, 0.2)'
+                                                            }}>{event.name} / SÂN KHẤU</div>
 
                                                             {sections.map((sec) => (
                                                                 <div key={sec.id} style={{
                                                                     position: 'absolute',
-                                                                    left: 600 + sec.x,
-                                                                    top: 400 + sec.y,
+                                                                    left: 600 + sec.x + 80,
+                                                                    top: 400 + sec.y + 80,
                                                                     transform: `rotate(${sec.rotation}deg)`,
                                                                     width: sec.shape === 'arc' ? `${(60 + ((sec.rows - 1) * 15)) * 2 + 40}px` : 'auto',
                                                                     height: sec.shape === 'arc' ? `${(60 + ((sec.rows - 1) * 15)) + 60}px` : 'auto',
+                                                                    padding: '16px'
                                                                 }}>
                                                                     {sec.shape === 'rectangle' ? (
                                                                         <div style={{
@@ -489,11 +440,11 @@ export default function EventDetail() {
                                                                                                 <div key={`${r}-${i}`} style={{
                                                                                                     position: 'absolute',
                                                                                                     left: '50%',
-                                                                                                    width: '14px',
-                                                                                                    height: '14px',
+                                                                                                    width: '12px',
+                                                                                                    height: '12px',
                                                                                                     borderRadius: '2px',
                                                                                                     background: String(sec.type).toUpperCase() === 'VIP' ? '#0053b7' : '#b30004',
-                                                                                                    transform: `translate(${rx - 7}px, ${ry}px) rotate(${angle}deg)`
+                                                                                                    transform: `translate(${rx - 6}px, ${ry}px) rotate(${angle}deg)`
                                                                                                 }}></div>
                                                                                             );
                                                                                         })}
@@ -512,12 +463,39 @@ export default function EventDetail() {
                                     )}
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <div className="tr-sidebar-footer">
-                                <button className="tr-btn tr-btn-white" style={{ width: '100%', height: '36px', fontSize: '12px' }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>grid_view</span>
-                                    Xem sơ đồ chi tiết
-                                </button>
+                    {/* Right Sidebar (Thông tin chi tiết) */}
+                    <aside className="tr-sidebar">
+                        <div className="tr-sidebar-box">
+                            <h4 className="tr-section-title">Thông tin chi tiết</h4>
+                            <div className="tr-info-grid" style={{ gridTemplateColumns: '1fr', gap: '24px', marginBottom: 0 }}>
+                                <div className="tr-info-card">
+                                    <div className="tr-info-icon">
+                                        <span className="material-symbols-outlined">calendar_today</span>
+                                    </div>
+                                    <div>
+                                        <div className="tr-info-label">Ngày & Giờ</div>
+                                        <div className="tr-info-val">{formatDate(event.date)}</div>
+                                        <div className="tr-info-val" style={{ fontWeight: 400, color: 'var(--tr-secondary)', fontSize: '14px' }}>
+                                            {new Date(event.date).toLocaleTimeString("vi-VN", { hour: '2-digit', minute: '2-digit' })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="tr-info-card">
+                                    <div className="tr-info-icon">
+                                        <span className="material-symbols-outlined">location_on</span>
+                                    </div>
+                                    <div>
+                                        <div className="tr-info-label">Địa điểm</div>
+                                        <div className="tr-info-val">{event.location?.split(',')[0]}</div>
+                                        <div className="tr-info-val" style={{ fontWeight: 400, color: 'var(--tr-secondary)', fontSize: '14px' }}>
+                                            {event.location}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -532,6 +510,45 @@ export default function EventDetail() {
                                     <div className="tr-info-label">Tỷ lệ lấp đầy</div>
                                     <div className="tr-info-val">85%</div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div className="tr-sidebar-box">
+                            <h4 className="tr-section-title">Mô tả sự kiện</h4>
+                            <div className="tr-desc-text" style={{ padding: 0, background: 'transparent' }}>
+                                {event.description || "Chưa có mô tả cho sự kiện này."}
+                            </div>
+                        </div>
+
+                        <div className="tr-sidebar-box">
+                            <h4 className="tr-section-title">Hạng vé & Trạng thái</h4>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table className="tr-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Loại vé</th>
+                                            <th>Giá</th>
+                                            <th>Đã bán</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>VIP Diamond</strong></td>
+                                            <td>2.500.000đ</td>
+                                            <td>485/500</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>VIP Gold</strong></td>
+                                            <td>1.800.000đ</td>
+                                            <td>1.200/1.500</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Standard</strong></td>
+                                            <td>900.000đ</td>
+                                            <td>7.415/8.000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </aside>
