@@ -1,4 +1,4 @@
-import { Link } from "react-router"
+import { Link } from "react-router-dom"
 import { Phone, Mail, Share2, Video, Camera, Ticket, MapPin } from "lucide-react"
 
 const footerLinks = {
