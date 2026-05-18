@@ -1,12 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { Link } from "react-router"
-import { Menu, X, User, Ticket, Shield } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ChevronDown, Menu, X, User, Ticket, LogOut, Search } from "lucide-react"
+import { ChevronDown, Menu, X, User, Ticket, LogOut, Search, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabaseClient"
 import { useDebounce } from "@/hooks/useDebounce"

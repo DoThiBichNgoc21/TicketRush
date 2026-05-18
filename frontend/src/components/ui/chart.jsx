@@ -6,23 +6,9 @@ import * as RechartsPrimitive from 'recharts'
 import { cn } from '@/lib/utils'
 
 // Format: { THEME_NAME: CSS_SELECTOR }
-const THEMES = { light: '', dark: '.dark' } as const
+const THEMES = { light: '', dark: '.dark' }
 
-export type ChartConfig = {
-  [k in string]: {
-    label?: React.ReactNode
-    icon?: React.ComponentType
-  } & (
-    | { color?: string; theme?: never }
-    | { color?: never; theme: Record<keyof typeof THEMES, string> }
-  )
-}
-
-type ChartContextProps = {
-  config: ChartConfig
-}
-
-const ChartContext = React.createContext < ChartContextProps | null > (null)
+const ChartContext = React.createContext(null)
 
 function useChart() {
   const context = React.useContext(ChartContext)
@@ -40,11 +26,6 @@ function ChartContainer({
   children,
   config,
   ...props
-}: React.ComponentProps<'div'> & {
-  config: ChartConfig
-  children: React.ComponentProps<
-    typeof RechartsPrimitive.ResponsiveContainer
-  >['children']
 }) {
   const uniqueId = React.useId()
   const chartId = `chart-${id || uniqueId.replace(/:/g, '')}`
@@ -69,7 +50,7 @@ function ChartContainer({
   )
 }
 
-const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
+const ChartStyle = ({ id, config }) => {
   const colorConfig = Object.entries(config).filter(
     ([, config]) => config.theme || config.color,
   )
@@ -88,7 +69,7 @@ ${prefix} [data-chart=${id}] {
 ${colorConfig
                 .map(([key, itemConfig]) => {
                   const color =
-                    itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
+                    itemConfig.theme?.[theme] ||
                     itemConfig.color
                   return color ? `  --color-${key}: ${color};` : null
                 })
@@ -118,14 +99,8 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
-  React.ComponentProps<'div'> & {
-    hideLabel?: boolean
-    hideIndicator?: boolean
-    indicator?: 'line' | 'dot' | 'dashed'
-    nameKey?: string
-    labelKey?: string
-  }) {
+  ...props
+}) {
   const { config } = useChart()
 
   const tooltipLabel = React.useMemo(() => {
