@@ -1,5 +1,9 @@
 "use client"
 
+import { useState } from "react"
+import { Link } from "react-router"
+import { Menu, X, User, Ticket, Shield } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { ChevronDown, Menu, X, User, Ticket, LogOut, Search } from "lucide-react"
@@ -183,6 +187,20 @@ export function Header() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 h-16">
+            <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" asChild>
+              <Link to="/admin">
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
+            </Button>
+
+            <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 font-semibold text-foreground hover:bg-orange-100 hover:text-orange-900 transition-colors">
+              <User className="w-4 h-4" />
+              Đăng nhập
+            </Button>
+            <Button size="sm" className="hidden sm:flex font-semibold bg-red-600 hover:bg-red-700 text-white">
+              Đăng ký
+            </Button>
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -261,7 +279,9 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
+
               {user ? (
+                /* HIỂN THỊ KHI ĐÃ ĐĂNG NHẬP */
                 <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border mt-2">
                   <div className="flex items-center gap-3 mb-2">
                     {user.avatar_url ? (
@@ -284,13 +304,28 @@ export function Header() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex gap-2 px-4 pt-4 border-t border-border mt-2">
-                  <Button variant="outline" size="sm" className="flex-1 font-semibold hover:bg-orange-100 hover:text-orange-900 hover:border-orange-200 transition-colors" onClick={() => { navigate('/login'); setMobileMenuOpen(false); }}>
-                    Đăng nhập
-                  </Button>
-                  <Button size="sm" className="flex-1 font-semibold bg-red-600 hover:bg-red-700 text-white" onClick={() => { navigate('/register'); setMobileMenuOpen(false); }}>
-                    Đăng ký
-                  </Button>
+                /* HIỂN THỊ KHI CHƯA ĐĂNG NHẬP */
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2 px-4 pt-4 border-t border-border mt-2">
+                    <Button variant="outline" size="sm" className="flex-1 font-semibold hover:bg-orange-100 hover:text-orange-900 hover:border-orange-200 transition-colors" onClick={() => { navigate('/login'); setMobileMenuOpen(false); }}>
+                      Đăng nhập
+                    </Button>
+                    <Button size="sm" className="flex-1 font-semibold bg-red-600 hover:bg-red-700 text-white" onClick={() => { navigate('/register'); setMobileMenuOpen(false); }}>
+                      Đăng ký
+                    </Button>
+                  </div>
+                  
+                  {/* NÚT VÀO ADMIN - GIỮ LẠI TỪ NHÁNH ADMIN */}
+                  <div className="px-4 py-2 border-t border-border mt-2">
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Shield className="w-4 h-4" />
+                      Lối vào Admin
+                    </Link>
+                  </div>
                 </div>
               )}
             </nav>

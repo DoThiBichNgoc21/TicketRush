@@ -66,11 +66,10 @@ export function BookingSidebar({
       {/* Timer */}
       {selectedSeats.length > 0 && (
         <div
-          className={`mb-4 flex items-center justify-between rounded-lg p-3 ${
-            isTimeWarning
+          className={`mb-4 flex items-center justify-between rounded-lg p-3 ${isTimeWarning
               ? "bg-destructive/10 text-destructive"
               : "bg-primary/10 text-primary"
-          }`}
+            }`}
         >
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
@@ -111,11 +110,10 @@ export function BookingSidebar({
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold ${
-                      seat.status === "vip"
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold ${seat.status === "vip"
                         ? "bg-amber-400 text-amber-900"
                         : "bg-white text-background"
-                    }`}
+                      }`}
                   >
                     {seat.row}
                     {seat.column}
