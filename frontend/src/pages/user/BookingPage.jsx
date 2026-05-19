@@ -47,7 +47,8 @@ const BookingPage = () => {
           column: parseInt(s.seat_number),
           status: s.status, // 'available', 'locked', 'sold'
           type: s.seat_type, // 'VIP', 'Standard'
-          price: s.price || (s.seat_type === 'VIP' ? s.vip_price : s.standard_price) || 0
+          price: s.price || (s.seat_type === 'VIP' ? s.vip_price : s.standard_price) || 0,
+          section: s.section
         }))
         setSeats(mappedSeats)
 
@@ -190,6 +191,7 @@ const BookingPage = () => {
               seats={seats} 
               selectedSeats={selectedSeats} 
               onSeatClick={handleSeatClick} 
+              layout={event.layout_json}
             />
           </div>
 

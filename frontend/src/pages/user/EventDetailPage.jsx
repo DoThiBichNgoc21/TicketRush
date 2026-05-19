@@ -77,7 +77,8 @@ const EventDetailPage = () => {
           column: parseInt(s.seat_number),
           status: s.status,
           type: s.seat_type,
-          price: s.price || (s.seat_type === 'VIP' ? s.vip_price : s.standard_price) || 0
+          price: s.price || (s.seat_type === 'VIP' ? s.vip_price : s.standard_price) || 0,
+          section: s.section
         }))
         setSeats(mappedSeats)
 
@@ -275,6 +276,7 @@ const EventDetailPage = () => {
                       seats={seats} 
                       selectedSeats={selectedSeats} 
                       onSeatClick={handleSeatClick} 
+                      layout={event.layout_json}
                     />
                   </div>
                 )}
