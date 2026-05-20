@@ -6,8 +6,8 @@ const seatStatusStyles = {
   available: "bg-blue-500 hover:bg-blue-600 hover:scale-110 cursor-pointer border-blue-600 text-white shadow-sm",
   vip: "bg-amber-400 hover:bg-amber-500 hover:scale-110 cursor-pointer border-amber-600 text-amber-950 shadow-md",
   selected: "bg-green-500 hover:bg-green-600 cursor-pointer border-green-400 ring-4 ring-green-400/50 text-white shadow-[0_0_20px_rgba(34,197,94,0.6)] z-20",
-  sold: "bg-transparent border-2 border-red-500 cursor-not-allowed text-red-500 font-bold",
-  locked: "bg-transparent border border-slate-300 cursor-not-allowed text-slate-300 opacity-40",
+  sold: "bg-transparent border border-slate-300 cursor-not-allowed text-slate-300 opacity-40",
+  locked: "bg-transparent border-2 border-red-500 cursor-not-allowed text-red-500 font-bold",
 }
 
 /** Kích thước canvas chi tiết vòng cung — scale theo số hàng/cột thay vì cố định 500px */
@@ -503,25 +503,6 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
           </div>
         </div>
 
-        {/* Legend in Zoom View */}
-        <div className="shrink-0 py-4 px-6 border-t border-slate-100 flex flex-wrap items-center justify-center gap-6 sm:gap-8">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-t-lg border-b-2 border-blue-600 bg-blue-500" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Thường</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-t-lg border-b-2 border-amber-600 bg-amber-400" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">VIP</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-t-lg border-b-2 border-green-400 bg-green-500 ring-4 ring-green-400/50" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đang chọn</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-t-lg border-2 border-red-500" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hết chỗ</span>
-          </div>
-        </div>
       </div>
     )
   }
@@ -798,27 +779,26 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
         </>
       )}
 
-      {/* Legend */}
       <div className="mt-8 flex flex-wrap items-center justify-center gap-6 px-4">
         <div className="flex items-center gap-3 bg-card p-2 px-4 rounded-xl border border-border shadow-sm">
-          <div className="h-6 w-6 rounded-t-md border-b-2 border-blue-600 bg-blue-500 shadow-sm" />
-          <span className="text-sm font-medium">Thường</span>
+          <div className="h-6 w-6 rounded-t-md border-b-2 border-amber-600 bg-amber-400 shadow-sm" />
+          <span className="text-sm font-medium">Ghế hạng VIP</span>
         </div>
         <div className="flex items-center gap-3 bg-card p-2 px-4 rounded-xl border border-border shadow-sm">
-          <div className="h-6 w-6 rounded-t-md border-b-2 border-amber-600 bg-amber-400 shadow-sm" />
-          <span className="text-sm font-medium">VIP</span>
+          <div className="h-6 w-6 rounded-t-md border-b-2 border-blue-600 bg-blue-500 shadow-sm" />
+          <span className="text-sm font-medium">Ghế hạng Standard</span>
         </div>
         <div className="flex items-center gap-3 bg-card p-2 px-4 rounded-xl border border-border shadow-sm">
           <div className="h-6 w-6 rounded-t-md border-b-2 border-green-400 bg-green-500 ring-4 ring-green-400/50 shadow-[0_0_20px_rgba(34,197,94,0.6)]" />
           <span className="text-sm font-medium">Đang chọn / giữ</span>
         </div>
         <div className="flex items-center gap-3 bg-card p-2 px-4 rounded-xl border border-border shadow-sm">
-          <div className="h-6 w-6 rounded-t-md border border-slate-300 bg-slate-100 opacity-60" />
-          <span className="text-sm font-medium text-muted-foreground">Locked (người khác)</span>
+          <div className="h-6 w-6 rounded-t-md border-2 border-red-500 bg-transparent" />
+          <span className="text-sm font-medium text-muted-foreground">Locked (người dùng khác đang giữ ghế)</span>
         </div>
         <div className="flex items-center gap-3 bg-card p-2 px-4 rounded-xl border border-border shadow-sm">
-          <div className="h-6 w-6 rounded-t-md border-2 border-red-500 bg-transparent" />
-          <span className="text-sm font-medium text-muted-foreground">Đã bán (Sold)</span>
+          <div className="h-6 w-6 rounded-t-md border border-slate-300 bg-slate-100 opacity-60" />
+          <span className="text-sm font-medium text-muted-foreground">Ghế trống</span>
         </div>
       </div>
 
