@@ -7,6 +7,7 @@ import adminAuthRouter from "./src/Routers/adminAuthRouter.js"; // Luồng Admin
 import adminEventRoutes from "./src/Routers/adminEventRoutes.js";
 import eventRoutes from "./src/Routers/adminEventDashboardRouters.js";
 import bookingRouter from "./src/Routers/bookingRouter.js";
+import ticketRouter from "./src/Routers/ticketRouter.js";
 import { startSeatReleaseWorker } from "./src/jobs/seatReleaseWorker.js";
 
 dotenv.config();
@@ -25,6 +26,7 @@ app.use("/api/admin/login", adminAuthRouter); // Route của người làm Admin
 app.use("/api/admin/events", adminEventRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/booking", bookingRouter);
+app.use("/api/tickets", ticketRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

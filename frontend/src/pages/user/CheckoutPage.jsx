@@ -153,6 +153,13 @@ export default function CheckoutPage() {
             </div>
             <Button
               className="w-full h-12 font-bold"
+              onClick={() => navigate('/my-tickets')}
+            >
+              Xem vé của tôi
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full h-12 font-bold"
               onClick={() => navigate(`/booking/${showtimeId}`)}
             >
               Về trang sự kiện
