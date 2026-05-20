@@ -6,6 +6,8 @@ import authRouter from './src/Routers/authRouter.js'; // Luồng User
 import adminAuthRouter from "./src/Routers/adminAuthRouter.js"; // Luồng Admin
 import adminEventRoutes from "./src/Routers/adminEventRoutes.js";
 import eventRoutes from "./src/Routers/adminEventDashboardRouters.js";
+import bookingRouter from "./src/Routers/bookingRouter.js";
+import { startSeatReleaseWorker } from "./src/jobs/seatReleaseWorker.js";
 
 dotenv.config();
 const app = express();
@@ -22,7 +24,10 @@ app.use("/api/auth", authRouter); // Route của người làm User
 app.use("/api/admin/login", adminAuthRouter); // Route của người làm Admin
 app.use("/api/admin/events", adminEventRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/booking", bookingRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+    console.log('Booking API: POST /api/booking/seats/:seatId/hold | release | confirm');
+    startSeatReleaseWorker();
 });

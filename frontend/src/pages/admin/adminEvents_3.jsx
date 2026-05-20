@@ -174,7 +174,7 @@ const TicketRushSeatMapDesign = () => {
           for (let c = 1; c <= sec.cols; c++) {
             allSeats.push({
               floor: sec.floor,
-              section: sec.name,
+              section: sec.id,
               row: `${sec.id}-${r}`,
               seat_number: c,
               status: "available",

@@ -2,6 +2,9 @@ import express from "express";
 import {
   getEvents,
   getEventById,
+  getShowtimeBookingDetail,
+  getShowtimesByEventId,
+  getSeatingChartByShowtime,
   createEvent,
   updateEvent,
   updateEventVisibility,
@@ -11,7 +14,11 @@ import {
 
 const router = express.Router();
 
+// Các route cụ thể phải đứng trước /:id
 router.get("/", getEvents);
+router.get("/showtimes/:showtimeId/seating-chart", getSeatingChartByShowtime);
+router.get("/showtimes/:showtimeId/booking", getShowtimeBookingDetail);
+router.get("/:eventId/showtimes", getShowtimesByEventId);
 router.get("/:id", getEventById);
 
 router.post("/", createEvent);
