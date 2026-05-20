@@ -97,7 +97,8 @@ const EventDetailPage = () => {
     isBooking,
     seatActionLoading,
     handleSeatClick,
-    handleConfirmBooking,
+    //handleConfirmBooking,
+    goToCheckout,
   } = useSeatBooking({
     eventId: event?.id,
     showtimeId: selectedShowtime?.id,
@@ -168,11 +169,11 @@ const EventDetailPage = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      
+
       <main className="flex-1 pt-20">
         {/* Breadcrumb / Back button */}
         <div className="container mx-auto px-4 py-4">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-6"
           >
@@ -185,9 +186,9 @@ const EventDetailPage = () => {
             <div className="lg:col-span-2 space-y-8">
               <div className="relative aspect-video rounded-2xl overflow-hidden border border-border shadow-lg">
                 {event.image_url ? (
-                  <img 
-                    src={event.image_url} 
-                    alt={event.name} 
+                  <img
+                    src={event.image_url}
+                    alt={event.name}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -245,10 +246,10 @@ const EventDetailPage = () => {
                   </div>
                 ) : (
                   <div className="bg-card border border-border rounded-2xl p-6 shadow-inner">
-                    <SeatMap 
-                      seats={seats} 
-                      selectedSeats={selectedSeats} 
-                      onSeatClick={handleSeatClick} 
+                    <SeatMap
+                      seats={seats}
+                      selectedSeats={selectedSeats}
+                      onSeatClick={handleSeatClick}
                       layout={event.layout_json}
                       seatsLoading={fetchingSeats}
                       currentUserId={userId}
@@ -277,8 +278,8 @@ const EventDetailPage = () => {
                     <div>
                       <p className="text-sm text-muted-foreground">Giá từ</p>
                       <p className="text-2xl font-bold text-primary">
-                        {prices.min > 0 
-                          ? `${prices.min.toLocaleString('vi-VN')}đ` 
+                        {prices.min > 0
+                          ? `${prices.min.toLocaleString('vi-VN')}đ`
                           : "Liên hệ"}
                       </p>
                     </div>
@@ -295,11 +296,10 @@ const EventDetailPage = () => {
                           <button
                             key={st.id}
                             onClick={() => setSelectedShowtime(st)}
-                            className={`flex items-center justify-between p-3 rounded-lg border transition-all text-left group ${
-                              selectedShowtime?.id === st.id 
-                                ? 'border-primary bg-primary/5' 
+                            className={`flex items-center justify-between p-3 rounded-lg border transition-all text-left group ${selectedShowtime?.id === st.id
+                                ? 'border-primary bg-primary/5'
                                 : 'border-border hover:border-primary/50'
-                            }`}
+                              }`}
                           >
                             <div className="flex flex-col">
                               <span className="text-sm font-medium">
@@ -343,14 +343,20 @@ const EventDetailPage = () => {
                     </div>
                   )}
 
-                  <Button 
+                  <Button
+                    // className="w-full py-6 text-lg font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20"
+                    // disabled={selectedSeats.length === 0 || isBooking || seatActionLoading}
+                    // onClick={handleConfirmBooking}
                     className="w-full py-6 text-lg font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20"
-                    disabled={selectedSeats.length === 0 || isBooking || seatActionLoading}
-                    onClick={handleConfirmBooking}
+                    disabled={selectedSeats.length === 0 || seatActionLoading}
+                    onClick={() => goToCheckout({
+                      event: event,
+                      showtime: selectedShowtime
+                    })}
                   >
                     MUA VÉ NGAY
                   </Button>
-                  
+
                   <p className="text-center text-xs text-muted-foreground mt-4">
                     Đảm bảo vé chính hãng 100%
                   </p>
