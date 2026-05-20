@@ -6,6 +6,7 @@ import authRouter from './src/Routers/authRouter.js'; // Luồng User
 import adminAuthRouter from "./src/Routers/adminAuthRouter.js"; // Luồng Admin
 import adminEventRoutes from "./src/Routers/adminEventRoutes.js";
 import eventRoutes from "./src/Routers/adminEventDashboardRouters.js";
+import adminUserManagement from "./src/Routers/adminUserManagementRouters.js";
 
 dotenv.config();
 const app = express();
@@ -22,6 +23,7 @@ app.use("/api/auth", authRouter); // Route của người làm User
 app.use("/api/admin/login", adminAuthRouter); // Route của người làm Admin
 app.use("/api/admin/events", adminEventRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/usermanagement", adminUserManagement);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

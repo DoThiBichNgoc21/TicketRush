@@ -21,6 +21,7 @@ import EventDetail from "./pages/admin/adminEventDetail";
 import CreateEventStep1 from './pages/admin/adminEvents_1';
 import CreateEventStep2 from './pages/admin/adminEvents_2';
 import CreateEventStep3 from './pages/admin/adminEvents_3';
+import UserManagement from "./pages/admin/adminUserManagement";
 
 // --- IMPORT CSS ---
 import './index.css';
@@ -50,6 +51,7 @@ function App() {
         <Route path="/admin/events/create/step-1" element={<CreateEventStep1 />} />
         <Route path="/admin/events/create/step-2" element={<CreateEventStep2 />} />
         <Route path="/admin/events/create/step-3" element={<CreateEventStep3 />} />
+        <Route path="/admin/usermanagement" element={<UserManagement />} />
       </Routes>
       
       {/* Hiển thị thông báo Toast cho toàn hệ thống */}

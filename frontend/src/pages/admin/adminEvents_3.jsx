@@ -112,11 +112,15 @@ const TicketRushSeatMapDesign = () => {
     const sec = sections.find(s => s.id === id);
     if (!sec) return;
 
+    const container = document.querySelector(".canvas-grid");
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+
     setDraggingId(id);
     setSelectedSectionId(id);
     setDragOffset({
-      x: e.clientX - sec.x,
-      y: e.clientY - sec.y
+      x: e.clientX - rect.left + container.scrollLeft - sec.x,
+      y: e.clientY - rect.top + container.scrollTop - sec.y
     });
   };
 
@@ -569,13 +573,17 @@ const TicketRushSeatMapDesign = () => {
                               Hạng vé
                             </p>
 
-                            <input
-                              className="w-full bg-slate-50 border-zinc-200 rounded-lg text-sm font-semibold focus:ring-primary focus:border-primary px-3 py-2"
-                              type="text"
-                              placeholder="VD: VIP, Standard..."
+                            <select
+                              className="w-full bg-slate-50 border-zinc-200 rounded-lg text-sm font-semibold focus:ring-primary focus:border-primary px-3 py-2 cursor-pointer"
                               value={selectedSection.type}
                               onChange={(e) => updateSection(selectedSection.id, { type: e.target.value })}
-                            />
+                            >
+                              <option value="Standard">Standard</option>
+                              <option value="VIP">VIP</option>
+                              <option value="VVIP">VVIP</option>
+                              <option value="Premium">Premium</option>
+                              <option value="Economy">Economy</option>
+                            </select>
                           </div>
                         </div>
 
