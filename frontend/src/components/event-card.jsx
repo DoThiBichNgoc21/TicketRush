@@ -2,10 +2,16 @@
 
 import { useState } from "react"
 import { Clock, MapPin, Calendar, Users } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "./ui/button"
+import { useNavigate } from "react-router-dom"
 
 export function EventCard({ event }) {
   const [isHovered, setIsHovered] = useState(false)
+  const navigate = useNavigate()
+
+  const handleDetailClick = () => {
+    navigate(`/event/${event.id}`)
+  }
 
   return (
     <div
@@ -57,6 +63,7 @@ export function EventCard({ event }) {
             size="sm" 
             variant="outline" 
             className="w-10/12 max-w-[140px] text-xs sm:text-sm border-foreground/30 text-foreground hover:bg-foreground/10"
+            onClick={handleDetailClick}
           >
             Xem chi tiết
           </Button>
