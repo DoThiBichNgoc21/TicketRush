@@ -10,6 +10,14 @@ const seatStatusStyles = {
   locked: "bg-transparent border-2 border-red-500 cursor-not-allowed text-red-500 font-bold",
 }
 
+const seatStatusStylesNoHover = {
+  available: "bg-blue-500 cursor-pointer border-blue-600 text-white shadow-sm",
+  vip: "bg-amber-400 cursor-pointer border-amber-600 text-amber-950 shadow-md",
+  selected: "bg-green-500 cursor-pointer border-green-400 ring-4 ring-green-400/50 text-white shadow-[0_0_20px_rgba(34,197,94,0.6)] z-20",
+  sold: "bg-transparent border border-slate-300 cursor-not-allowed text-slate-300 opacity-40",
+  locked: "bg-transparent border-2 border-red-500 cursor-not-allowed text-red-500 font-bold",
+}
+
 /** Kích thước canvas chi tiết vòng cung — scale theo số hàng/cột thay vì cố định 500px */
 function getArcDetailLayout(rows, cols, seatPx = 36) {
   const innerRadius = 150
@@ -294,7 +302,7 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
   }
 
   const renderSeat = (seat, type = "Standard", extraProps = {}) => {
-    const { className, style, showLabel = true, labelOverride = null, detailView = false } = extraProps
+    const { className, style, showLabel = true, labelOverride = null, detailView = false, disableHover = false } = extraProps
     const status = getSeatStatus(seat)
     
     if (status === "skeleton") {
@@ -325,24 +333,46 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
     }
 
     const isClickable =
+      detailView &&
       !seatActionLoading &&
       (status === "available" || status === "vip" || status === "selected")
+
+    const seatClasses = disableHover ? seatStatusStylesNoHover[status] || seatStatusStyles[status] : seatStatusStyles[status]
+    const seatElement = (
+      <div
+        className={cn(
+          "relative flex items-center justify-center rounded-t-lg border-b-2 font-bold transition-all duration-200 shadow-md",
+          seatClasses,
+          className
+        )}
+        style={{ 
+          width: `${userSeatSize}px`, 
+          height: `${userSeatSize}px`,
+          fontSize: `${Math.max(8, (style?.width ? parseInt(style.width) : userSeatSize) / 2.5)}px`,
+          ...style 
+        }}
+        title={`${seat?.type} - Ghế ${seat?.column} - ${seat?.price?.toLocaleString("vi-VN")}đ`}
+      >
+        {showLabel ? (labelOverride !== null ? labelOverride : seat?.column) : ""}
+      </div>
+    )
+
+    if (!detailView) {
+      return seatElement
+    }
 
     return (
       <button
         type="button"
-        onMouseDown={(e) => {
-          if (detailView) e.preventDefault()
-        }}
         onClick={(e) => {
           e.stopPropagation()
-          if (detailView) saveZoomScroll()
+          saveZoomScroll()
           if (isClickable && seat) onSeatClick(seat)
         }}
         disabled={!isClickable || seatActionLoading}
         className={cn(
           "relative flex items-center justify-center rounded-t-lg border-b-2 font-bold transition-all duration-200 shadow-md",
-          seatStatusStyles[status],
+          seatClasses,
           className
         )}
         style={{ 
@@ -383,7 +413,7 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
           </button>
           <div className="text-center">
             <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">
-              {isDefaultSectionName(sec.name) ? "Chi tiết khu vực" : sec.name}
+              {sec.name || "Chi tiết khu vực"}
             </h3>
             <p className="text-sm text-slate-500 font-medium">Chọn ghế của bạn tại đây</p>
           </div>
@@ -451,20 +481,29 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
                <div className="relative w-full h-full">
                   {/* Column labels */}
                   {Array.from({ length: cols }).map((_, i) => {
+                    // 1. Lấy đúng góc của cột ghế thứ i + 1 (Đồng bộ tuyệt đối với logic vẽ ghế)
                     const { angle } = getArcSeatTransform(1, i + 1, cols, arcLayout)
-                    const labelRadius = arcLayout.innerRadius - 50
-                    const lx = Math.sin((angle * Math.PI) / 180) * labelRadius
-                    const ly =
-                      -Math.cos((angle * Math.PI) / 180) * labelRadius +
-                      arcLayout.maxRadius -
-                      24
+                    const angleRad = (angle * Math.PI) / 180
+                    
+                     // 2. Thiết lập bán kính cho nhãn (Label Radius)
+                    // Đặt nhãn nằm phía trong hàng ghế đầu tiên (innerRadius) một khoảng đệm
+                    //const labelRadius = Math.max(arcLayout.innerRadius - detailSeatPx * 1.8, detailSeatPx + 16)
+                    const labelRadius = arcLayout.innerRadius - (detailSeatPx * 1.2)
+                    // 3. Tính toán tọa độ x, y
+                    // lx: Độ lệch ngang so với tâm (50%)
+                    // ly: Độ lệch dọc dựa trên bán kính và tâm vòng cung
+                    const lx = Math.sin(angleRad) * labelRadius
+                    const ly = -Math.cos(angleRad) * labelRadius + arcLayout.maxRadius 
+                      //- detailSeatPx * 1.2
 
                     return (
                       <div 
                         key={`col-label-${i}`}
-                        className="absolute left-1/2 top-0 text-[11px] font-black text-slate-500 uppercase flex items-center justify-center w-6 h-6 pointer-events-none"
+                        className="absolute left-1/2 top-0 text-[11px] font-black text-slate-500 uppercase flex items-center justify-center w-8 h-8 pointer-events-none"
                         style={{
-                          transform: `translate(${lx - 12}px, ${ly}px) rotate(${angle}deg)`
+                          //transform: `translate(${lx - 16}px, ${ly - 16}px)`
+                          transform: `translate(calc(-50% + ${lx}px), ${ly}px) rotate(${angle}deg)`,
+                          transformOrigin: "center center",
                         }}
                       >
                         {String.fromCharCode(65 + i)}
@@ -482,6 +521,7 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
                           <React.Fragment key={`${sec.id}-${r}-${i}`}>
                             {renderSeat(seat, sec.type, {
                               detailView: true,
+                              disableHover: sec.shape === "arc",
                               className: "absolute",
                               labelOverride: r + 1,
                               style: {
@@ -611,8 +651,11 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
                     </div>
 
                     {/* Section Label */}
-                    {sec.name && !isDefaultSectionName(sec.name) && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-white border border-slate-200 text-slate-600 text-[10px] font-black rounded-full uppercase tracking-[0.15em] shadow-md z-20 whitespace-nowrap group-hover/sec:bg-primary group-hover/sec:text-white group-hover/sec:border-primary transition-all duration-300">
+                    {sec.name && (
+                      <div
+                        className="absolute -top-6 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-white border border-slate-200 text-slate-600 text-[10px] font-black rounded-full uppercase tracking-[0.15em] shadow-md z-20 whitespace-nowrap group-hover/sec:bg-primary group-hover/sec:text-white group-hover/sec:border-primary transition-all duration-300"
+                        style={{ transform: `translateX(-50%) rotate(${-Number(sec.rotation || 0)}deg)` }}
+                      >
                         {sec.name}
                       </div>
                     )}
