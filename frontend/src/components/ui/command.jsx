@@ -16,7 +16,7 @@ import {
 function Command({
   className,
   ...props
-}: React.ComponentProps<typeof CommandPrimitive>) {
+}) {
   return (
     <CommandPrimitive
       data-slot="command"
@@ -36,11 +36,6 @@ function CommandDialog({
   className,
   showCloseButton = true,
   ...props
-}: React.ComponentProps<typeof Dialog> & {
-  title?: string
-  description?: string
-  className?: string
-  showCloseButton?: boolean
 }) {
   return (
     <Dialog {...props}>
@@ -63,7 +58,7 @@ function CommandDialog({
 function CommandInput({
   className,
   ...props
-}: React.ComponentProps<typeof CommandPrimitive.Input>) {
+}) {
   return (
     <div
       data-slot="command-input-wrapper"
@@ -85,7 +80,7 @@ function CommandInput({
 function CommandList({
   className,
   ...props
-}: React.ComponentProps<typeof CommandPrimitive.List>) {
+}) {
   return (
     <CommandPrimitive.List
       data-slot="command-list"

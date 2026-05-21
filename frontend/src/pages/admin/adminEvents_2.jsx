@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { setCookie, getCookie, removeCookie } from "../../utils/cookieUtils";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -18,8 +19,7 @@ const markerIcon = new L.Icon({
 function CreateEventStep2() {
   const navigate = useNavigate();
 
-  const savedStep2 =
-    JSON.parse(localStorage.getItem("create_event_step_2")) || {};
+  const savedStep2 = getCookie("create_event_step_2") || {};
 
   const [date, setDate] = useState(savedStep2.date || "");
   const [time, setTime] = useState(savedStep2.time || "");
@@ -48,7 +48,7 @@ function CreateEventStep2() {
       ...newData,
     };
 
-    localStorage.setItem("create_event_step_2", JSON.stringify(data));
+    setCookie("create_event_step_2", data);
   };
 
   const handleBack = () => {
@@ -113,7 +113,7 @@ function CreateEventStep2() {
 
     saveStep2();
 
-    const event_id = localStorage.getItem("draft_event_id");
+    const event_id = getCookie("draft_event_id");
 
     if (!event_id) {
       setError("Không tìm thấy sự kiện. Vui lòng quay lại Bước 1.");
@@ -138,6 +138,7 @@ function CreateEventStep2() {
             city,
             latitude: mapPosition[0],
             longitude: mapPosition[1],
+            showtime_id: getCookie("draft_showtime_id") || undefined,
           }),
         }
       );
@@ -148,13 +149,10 @@ function CreateEventStep2() {
         throw new Error(data.message || "Lưu thời gian và địa điểm thất bại.");
       }
 
-      localStorage.setItem("draft_showtime_id", data.showtime.id);
-      localStorage.setItem(
-        "draft_location",
-        `${location}${city ? ", " + city : ""}`
-      );
-      localStorage.setItem("draft_latitude", mapPosition[0]);
-      localStorage.setItem("draft_longitude", mapPosition[1]);
+      setCookie("draft_showtime_id", data.showtime.id);
+      setCookie("draft_location", `${location}${city ? ", " + city : ""}`);
+      setCookie("draft_latitude", mapPosition[0]);
+      setCookie("draft_longitude", mapPosition[1]);
 
       navigate("/admin/events/create/step-3");
     } catch (err) {

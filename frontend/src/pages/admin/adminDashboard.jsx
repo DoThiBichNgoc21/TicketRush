@@ -1,11 +1,62 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getEvents } from "../../api/eventApi";
 
 export default function AdminDashboard() {
-  const navigate = useNavigate();
-  return (
-    <div className="bg-[#f8f9fa] text-[#191c1d] font-['Inter'] text-[16px] leading-[24px] overflow-hidden">
-      <style>{`
+    const navigate = useNavigate();
+    const [events, setEvents] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchRecentEvents = async () => {
+        try {
+            const result = await getEvents();
+            setEvents((result.events || []).slice(0, 5));
+        } catch (error) {
+            console.error("Lỗi lấy sự kiện gần đây:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchRecentEvents();
+    }, []);
+
+    const getCalculatedStatus = (event) => {
+        if (!event) return "unknown";
+        if (event.status === "cancelled") return "cancelled";
+        if (event.status === "draft") return "draft";
+
+        const now = new Date();
+        const eventDate = new Date(event.date);
+        const todayStart = new Date(now.setHours(0, 0, 0, 0));
+        const todayEnd = new Date(now.setHours(23, 59, 59, 999));
+
+        if (event.status === "ended" || eventDate < todayStart) return "ended";
+        if (eventDate >= todayStart && eventDate <= todayEnd) return "ongoing";
+        if (eventDate > todayEnd) return "upcoming";
+
+        return event.status || "unknown";
+    };
+
+    const getStatusBadge = (event) => {
+        const status = getCalculatedStatus(event);
+        switch (status) {
+            case "ongoing":
+                return <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-700">ĐANG DIỄN RA</span>;
+            case "upcoming":
+                return <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-700">SẮP DIỄN RA</span>;
+            case "ended":
+                return <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-gray-100 text-gray-700">ĐÃ KẾT THÚC</span>;
+            case "draft":
+                return <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700">BẢN NHÁP</span>;
+            default:
+                return <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-gray-100 text-gray-500">CHƯA RÕ</span>;
+        }
+    };
+    return (
+        <div className="bg-[#f8f9fa] text-[#191c1d] font-['Inter'] text-[16px] leading-[24px] overflow-hidden">
+            <style>{`
             .material-symbols-outlined {
                 font - variation - settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
@@ -35,7 +86,7 @@ export default function AdminDashboard() {
                     <button
                         onClick={() => navigate("/admin/events")}
                         className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
-                        >
+                    >
                         <span className="material-symbols-outlined">calendar_today</span>
                         <span>Sự kiện</span>
                     </button>
@@ -57,7 +108,7 @@ export default function AdminDashboard() {
                         <span className="material-symbols-outlined" data-icon="help">help</span>
                         <span>Hỗ trợ</span>
                     </a>
-                    <button 
+                    <button
                         onClick={() => navigate("/")}
                         className="flex items-center w-full py-2 space-x-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-all font-sans font-medium text-sm text-left"
                     >
@@ -88,13 +139,7 @@ export default function AdminDashboard() {
                         <button className="p-2 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors rounded-full active:scale-95 duration-150">
                             <span className="material-symbols-outlined" data-icon="settings">settings</span>
                         </button>
-                        <button
-                            onClick={() => navigate("/admin/events/create/step-1")}
-                            className="bg-[#b30004] text-white px-4 py-2 rounded-lg font-semibold flex items-center space-x-2 active:scale-95 duration-150 hover:bg-red-800 transition-colors"
-                        >
-                            <span className="material-symbols-outlined text-lg" data-icon="add">add</span>
-                            <span>Tạo sự kiện</span>
-                        </button>
+
                         <img alt="Admin profile" className="h-8 w-8 rounded-full border border-gray-200" data-alt="professional portrait of a middle-aged male administrator in a clean office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkwAngUbmfRR2-wc5vUWZK4vZ7G2_YR78BAiOcpjs_z9f700laYOsTgNt2tL7C9n4pPFbmQK-d1bFLMWZlV6CS46BRWk3UJmZztDGJZFMRBGdo1zxMhIBDlDi1Nieqtjd18vyaMRL2nBoU3Uoxv8vC9uzMhmMKEhB-SU-wamaB8FXeswCoW7DS888vEvH8T-DVbMw9Br5AVWyzky8T8C9DSuJwKmUbTHThwerjkN31Z2HbTIOhdsP8AL26xtS4lU897B1Hu3M9mE8" />
                     </div>
                 </header>
@@ -264,109 +309,64 @@ export default function AdminDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    <tr className="hover:bg-gray-50 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center space-x-4">
-                                                <div className="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0">
-                                                    <img className="h-full w-full object-cover" data-alt="energetic rock concert atmosphere with intense red stage lighting and blurred audience hands" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXedMCdx7mzwdpu3dZ6wV6corugBTlLpWou7xVvD1UCS7JfEXhjNRuxMpTtX7UKDORg9nUzQs84ATCufz1GyYGm6KEO0_Ev0uzKfDvj_cYn131RmG-6hrkLIM_eczJktiLTEQewAO9YmVtDm6-rLwsBsyXJpw2qQE3iFTBttYmLF11c402HwCZb1lbrK3hryAAvO5ktVDid4nFahB1Pnv-beRpsJ2n0plLRR9YKRbe678zcPd9EjByScJN8DwlQPT2LVJVTzNpAbc" />
-                                                </div>
-                                                <div>
-                                                    <div className="text-sm font-bold text-gray-900">Electric Horizon Tour</div>
-                                                    <div className="text-xs text-gray-500">Metro Arena • Oct 12, 2023</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700">HOẠT ĐỘNG</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center space-x-2">
-                                                <div className="flex-1 h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-[#b30004] w-[92%]"></div>
-                                                </div>
-                                                <span className="text-xs font-bold text-gray-700">92%</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <span className="text-sm font-bold text-gray-900">$425,000.00</span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button className="p-2 text-gray-400 hover:text-[#b30004] transition-colors">
-                                                <span className="material-symbols-outlined" data-icon="more_vert">more_vert</span>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr className="hover:bg-gray-50 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center space-x-4">
-                                                <div className="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0">
-                                                    <img className="h-full w-full object-cover" data-alt="classical music concert with orchestra and violinist spotlighted on a grand wooden stage" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdxWQwFt4fUVBgReoUC7RnKYN7KHTupHEdh4vkm4Aipp9htUrRP-BzeDks0DxYV7Z74eg65MC6Ys9jXBvfl4sikPq7mfZz1-lEtS9yjWEbosicCqZXKP7ZR1HvKomcRdEGXGtomBwv-19OtQ2z0kFnqsKK1zT24JASDJo4Vi8JP3LDF1udnShaatWO5zxLxvsS-SCr4Awtr4hL1Wf5D-J5ExePNlmB19QYopBUPQM2rpDkzhRnlqPCrnMpq9X6ClthSvrC61cquHI" />
-                                                </div>
-                                                <div>
-                                                    <div className="text-sm font-bold text-gray-900">Symphony in the Park</div>
-                                                    <div className="text-xs text-gray-500">Central Park • Oct 15, 2023</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700">SẮP DIỄN RA</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center space-x-2">
-                                                <div className="flex-1 h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-[#b30004] w-[45%]"></div>
-                                                </div>
-                                                <span className="text-xs font-bold text-gray-700">45%</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <span className="text-sm font-bold text-gray-900">$182,500.00</span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button className="p-2 text-gray-400 hover:text-[#b30004] transition-colors">
-                                                <span className="material-symbols-outlined" data-icon="more_vert">more_vert</span>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr className="hover:bg-gray-50 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center space-x-4">
-                                                <div className="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0">
-                                                    <img className="h-full w-full object-cover" data-alt="professional technology conference with speaker at podium and large screen showing data visualizations" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIVLz_aKqqXs7DPCAl2CnQaD6REQJWBRDtp79G-87GmHpAW8wzYV99goHJPTVM28MZRdf5wx4X_DIkWiIPa2LmJA2JjFdgkx-SvmpxTyVEy5t-be2zg1PN_Pk6FgG97HXR-gVh0LvmBaLCoUYlkCpKilC3FQF4CZ9mwLvE76nG-xFV7vVKeacEVrAQVOY3zEroqe7t3213B-PxmffotP09ZKMvYqSqIPhCNEkCiVt9IShOVyhAcoofVJMjtW19X_WQGewr5KxGwVE" />
-                                                </div>
-                                                <div>
-                                                    <div className="text-sm font-bold text-gray-900">Tech Summit 2023</div>
-                                                    <div className="text-xs text-gray-500">Expo Center • Oct 20, 2023</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700">HOẠT ĐỘNG</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center space-x-2">
-                                                <div className="flex-1 h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-[#b30004] w-[78%]"></div>
-                                                </div>
-                                                <span className="text-xs font-bold text-gray-700">78%</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <span className="text-sm font-bold text-gray-900">$940,000.00</span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button className="p-2 text-gray-400 hover:text-[#b30004] transition-colors">
-                                                <span className="material-symbols-outlined" data-icon="more_vert">more_vert</span>
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">Đang tải dữ liệu...</td>
+                                        </tr>
+                                    ) : events.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">Không có sự kiện nào gần đây</td>
+                                        </tr>
+                                    ) : (
+                                        events.map((event) => (
+                                            <tr key={event.id} className="hover:bg-gray-50 transition-colors group">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center space-x-4">
+                                                        <div className="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                                                            <img 
+                                                                className="h-full w-full object-cover" 
+                                                                src={event.image_url || "https://via.placeholder.com/40"} 
+                                                                alt={event.name}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-sm font-bold text-gray-900">{event.name}</div>
+                                                            <div className="text-xs text-gray-500">{event.location} • {new Date(event.date).toLocaleDateString("vi-VN")}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    {getStatusBadge(event)}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center space-x-2">
+                                                        <div className="flex-1 h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-[#b30004] w-[0%]"></div>
+                                                        </div>
+                                                        <span className="text-xs font-bold text-gray-700">0%</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <span className="text-sm font-bold text-gray-900">0 VNĐ</span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    <button 
+                                                        onClick={() => navigate(`/admin/events`)}
+                                                        className="p-2 text-gray-400 hover:text-[#b30004] transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
                     </section>
                 </div>
             </main>
-        
-    </div>
-  );
+
+        </div>
+    );
 }

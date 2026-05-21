@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { setCookie, getCookie, removeCookie } from "../../utils/cookieUtils";
 
 const DEFAULT_PREVIEW =
   "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=1200&auto=format&fit=crop";
@@ -7,8 +8,7 @@ const DEFAULT_PREVIEW =
 function CreateEventStep1() {
   const navigate = useNavigate();
 
-  const savedStep1 =
-    JSON.parse(localStorage.getItem("create_event_step_1")) || {};
+  const savedStep1 = getCookie("create_event_step_1") || {};
 
   const [form, setForm] = useState(
     savedStep1.form || {
@@ -27,13 +27,10 @@ function CreateEventStep1() {
   const [error, setError] = useState("");
 
   const saveStep1 = (newForm, newPreviewSrc = previewSrc) => {
-    localStorage.setItem(
-      "create_event_step_1",
-      JSON.stringify({
-        form: newForm,
-        previewSrc: newPreviewSrc,
-      })
-    );
+    setCookie("create_event_step_1", {
+      form: newForm,
+      previewSrc: newPreviewSrc,
+    });
   };
 
   const handleChange = (e) => {
@@ -73,7 +70,7 @@ function CreateEventStep1() {
 
     saveStep1(form, previewSrc);
 
-    const adminId = parseInt(localStorage.getItem("admin_id"), 10);
+    const adminId = parseInt(getCookie("admin_id") || localStorage.getItem("admin_id"), 10);
 
     if (!adminId) {
       setError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
@@ -95,7 +92,7 @@ function CreateEventStep1() {
           date: new Date().toISOString(),
           location: "Chưa xác định",
           category: form.category,
-          image_url: null,
+          image_url: previewSrc !== DEFAULT_PREVIEW ? previewSrc : null,
         }),
       });
 
@@ -105,11 +102,11 @@ function CreateEventStep1() {
         throw new Error(data.message || "Không thể tạo sự kiện.");
       }
 
-      localStorage.setItem("draft_event_id", data.event.id);
-      localStorage.setItem("draft_event_name", form.name);
+      setCookie("draft_event_id", data.event.id);
+      setCookie("draft_event_name", form.name);
 
       if (imageFile || savedStep1.previewSrc) {
-        localStorage.setItem("draft_event_has_image", "true");
+        setCookie("draft_event_has_image", "true");
       }
 
       navigate("/admin/events/create/step-2");
@@ -316,7 +313,7 @@ function CreateEventStep1() {
                   type="button"
                   onClick={() => {
                     if (window.confirm("Bạn có chắc muốn hủy tạo sự kiện?")) {
-                      localStorage.removeItem("create_event_step_1");
+                      removeCookie("create_event_step_1");
                       navigate("/admin/events");
                     }
                   }}
