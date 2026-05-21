@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Header } from '../../components/header'
 import { Footer } from '../../components/footer'
 import { SeatMap } from '../../components/seat-selection/seat-map'
 import { BookingSidebar } from '../../components/seat-selection/booking-sidebar'
 import { supabase } from '../../lib/supabaseClient'
+import axiosInstance from '../../lib/axiosInstance'
+import { fetchSeatingChartRows } from '../../lib/fetchSeatingChart'
+import { useSeatBooking } from '../../hooks/useSeatBooking'
 import { toast } from 'sonner'
 
 const BookingPage = () => {
@@ -13,149 +16,84 @@ const BookingPage = () => {
   const [event, setEvent] = useState(null)
   const [showtime, setShowtime] = useState(null)
   const [seats, setSeats] = useState([])
-  const [selectedSeats, setSelectedSeats] = useState([])
   const [loading, setLoading] = useState(true)
-  const [timeLeft, setTimeLeft] = useState(600) // 10 minutes in seconds
+
+  const reloadSeats = useCallback(async () => {
+    if (!showtime?.id) return []
+    const mapped = await fetchSeatingChartRows(showtime.id)
+    setSeats(mapped)
+    return mapped
+  }, [showtime?.id])
+
+  const {
+    userId,
+    selectedSeats,
+    timeLeft,
+    seatActionLoading,
+    handleSeatClick,
+    goToCheckout,
+    maxSeats,
+  } = useSeatBooking({
+    eventId: event?.id,
+    showtimeId: showtime?.id,
+    reloadSeats,
+  })
 
   useEffect(() => {
+    const controller = new AbortController()
+
     async function fetchData() {
       setLoading(true)
+      const idParam = String(showtimeId ?? '').trim()
       try {
-        // 1. Fetch showtime and linked event
-        const { data: stData, error: stError } = await supabase
-          .from('showtimes')
-          .select('*, events(*)')
-          .eq('id', showtimeId)
-          .single()
+        let stData = null
+        let normalizedEvent = null
 
-        if (stError) throw stError
+        try {
+          const { data: apiRes } = await axiosInstance.get(
+            `/events/showtimes/${idParam}/booking`,
+            { signal: controller.signal }
+          )
+          stData = apiRes?.showtime
+          normalizedEvent = apiRes?.event
+        } catch (apiErr) {
+          if (apiErr?.code === 'ERR_CANCELED') return
+          console.warn('[BookingPage] API booking detail:', apiErr?.message || apiErr)
+          const { data, error: stError } = await supabase
+            .from('showtimes')
+            .select('*, events(*)')
+            .eq('id', idParam)
+            .single()
+          if (stError) throw stError
+          stData = data
+          const rawEvent = data?.events
+          normalizedEvent = Array.isArray(rawEvent) ? rawEvent[0] : rawEvent
+        }
+
+        if (!stData || !normalizedEvent) {
+          throw new Error('Thiếu dữ liệu suất chiếu / sự kiện')
+        }
+
         setShowtime(stData)
-        setEvent(stData.events)
+        setEvent(normalizedEvent)
 
-        // 2. Fetch seating chart for this showtime
-        const { data: seatData, error: seatError } = await supabase
-          .from('seating_chart')
-          .select('*')
-          .eq('showtime_id', showtimeId)
-
-        if (seatError) throw seatError
-        
-        // Map seating_chart to SeatMap format
-        const mappedSeats = seatData.map(s => ({
-          id: s.id,
-          row: s.row,
-          column: parseInt(s.seat_number),
-          status: s.status, // 'available', 'locked', 'sold'
-          type: s.seat_type, // 'VIP', 'Standard'
-          price: s.price || (s.seat_type === 'VIP' ? s.vip_price : s.standard_price) || 0,
-          section: s.section
-        }))
-        setSeats(mappedSeats)
-
+        const mappedSeats = await fetchSeatingChartRows(stData.id, controller.signal)
+        if (!controller.signal.aborted) {
+          setSeats(mappedSeats)
+        }
       } catch (error) {
+        if (error?.code === 'ERR_CANCELED') return
         console.error('Error fetching booking data:', error)
-        toast.error('Không thể tải thông tin phòng vé')
+        toast.error('Không thể tải thông tin phòng vé. Đảm bảo backend đang chạy (port 3000).')
+        setSeats([])
       } finally {
-        setLoading(false)
+        if (!controller.signal.aborted) setLoading(false)
       }
     }
 
     if (showtimeId) fetchData()
+    return () => controller.abort()
   }, [showtimeId])
-
-  // Timer logic
-  useEffect(() => {
-    if (selectedSeats.length === 0) {
-      setTimeLeft(600)
-      return
-    }
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          setSelectedSeats([])
-          toast.error('Hết thời gian giữ chỗ!')
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [selectedSeats])
-
-  const handleSeatClick = (seat) => {
-    if (selectedSeats.some(s => s.id === seat.id)) {
-      setSelectedSeats(selectedSeats.filter(s => s.id !== seat.id))
-    } else {
-      if (selectedSeats.length >= 8) {
-        toast.warning('Bạn chỉ có thể chọn tối đa 8 ghế')
-        return
-      }
-      setSelectedSeats([...selectedSeats, seat])
-    }
-  }
-
-  const handleConfirmBooking = async () => {
-    const userRaw = localStorage.getItem('user_info')
-    if (!userRaw) {
-      toast.error('Vui lòng đăng nhập để đặt vé')
-      navigate('/login')
-      return
-    }
-
-    const user = JSON.parse(userRaw)
-    const totalAmount = selectedSeats.reduce((sum, s) => sum + s.price, 0)
-
-    try {
-      // 1. Create Booking
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
-        .insert({
-          user_id: user.id,
-          event_id: event.id,
-          total_amount: totalAmount,
-          status: 'Confirmed'
-        })
-        .select()
-        .single()
-
-      if (bookingError) throw bookingError
-
-      // 2. Create Tickets and Update Seat Status
-      const ticketPromises = selectedSeats.map(async (seat) => {
-        // Create ticket
-        const { error: ticketError } = await supabase
-          .from('tickets')
-          .insert({
-            booking_id: booking.id,
-            seat_id: seat.id,
-            price: seat.price,
-            ticket_type: seat.type
-          })
-
-        if (ticketError) throw ticketError
-
-        // Update seat status to 'sold'
-        const { error: seatUpdateError } = await supabase
-          .from('seating_chart')
-          .update({ status: 'sold', user_id: user.id })
-          .eq('id', seat.id)
-
-        if (seatUpdateError) throw seatUpdateError
-      })
-
-      await Promise.all(ticketPromises)
-
-      toast.success('Đặt vé thành công!')
-      navigate('/my-tickets') // Or wherever appropriate
-
-    } catch (error) {
-      console.error('Booking Error:', error)
-      toast.error('Có lỗi xảy ra trong quá trình đặt vé')
-    }
-  }
 
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -176,13 +114,12 @@ const BookingPage = () => {
       
       <main className="flex-1 container mx-auto px-4 py-8 pt-24">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left: Seat Map */}
           <div className="flex-1 bg-card rounded-2xl border border-border p-6 shadow-sm">
             <div className="mb-8 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">Chọn chỗ ngồi</h2>
                 <p className="text-sm text-muted-foreground">
-                  Vui lòng chọn ghế bạn muốn ngồi trong sự kiện
+                  Ghế được giữ 10 phút sau khi chọn — chỉ một người giữ được mỗi ghế
                 </p>
               </div>
             </div>
@@ -192,10 +129,12 @@ const BookingPage = () => {
               selectedSeats={selectedSeats} 
               onSeatClick={handleSeatClick} 
               layout={event.layout_json}
+              seatsLoading={loading}
+              currentUserId={userId}
+              seatActionLoading={seatActionLoading}
             />
           </div>
 
-          {/* Right: Sidebar */}
           <div className="w-full lg:w-96">
             <div className="sticky top-24 bg-card rounded-2xl border border-border p-6 shadow-sm">
               <BookingSidebar 
@@ -205,12 +144,16 @@ const BookingPage = () => {
                   date: new Date(showtime.start_time).toLocaleDateString('vi-VN'),
                   time: new Date(showtime.start_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
                   venue: event.location,
-                  address: event.location // Use location as address if not separate
+                  address: event.location
                 }}
                 selectedSeats={selectedSeats}
                 onRemoveSeat={handleSeatClick}
-                onConfirm={handleConfirmBooking}
+                onCheckout={() =>
+                  goToCheckout({ event, showtime })
+                }
                 timeLeft={timeLeft}
+                isBusy={seatActionLoading}
+                maxSeats={maxSeats}
               />
             </div>
           </div>
@@ -221,5 +164,4 @@ const BookingPage = () => {
     </div>
   )
 }
-
 export default BookingPage

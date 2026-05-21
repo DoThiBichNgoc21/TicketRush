@@ -14,13 +14,26 @@ export const verifyToken = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
-    return res.status(403).json({ message: 'Token không hợp lệ hoặc đã hết hạn' });
+    const expired = err.name === 'TokenExpiredError';
+    return res.status(401).json({
+      message: expired
+        ? 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại'
+        : 'Token không hợp lệ, vui lòng đăng nhập lại',
+      code: expired ? 'TOKEN_EXPIRED' : 'TOKEN_INVALID',
+    });
   }
 };
 
 export const requireAdmin = (req, res, next) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Yêu cầu quyền admin' });
+  }
+  next();
+};
+
+export const requireUser = (req, res, next) => {
+  if (req.user.role !== 'user') {
+    return res.status(403).json({ message: 'Yêu cầu đăng nhập tài khoản người dùng' });
   }
   next();
 };

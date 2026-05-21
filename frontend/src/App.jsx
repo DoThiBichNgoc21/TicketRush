@@ -8,6 +8,8 @@ import UserRegister from './pages/user/Register';
 import UserEventsPage from './pages/user/EventsPage';
 import EventDetailPage from './pages/user/EventDetailPage';
 import BookingPage from './pages/user/BookingPage';
+import CheckoutPage from './pages/user/CheckoutPage';
+import MyTickets from './pages/user/MyTickets';
 import ProfilePage from './pages/user/Profile';
 import SearchPage from './pages/user/SearchPage';
 
@@ -38,6 +40,8 @@ function App() {
         <Route path="/su-kien" element={<UserEventsPage />} />
         <Route path="/event/:id" element={<EventDetailPage />} />
         <Route path="/booking/:showtimeId" element={<BookingPage />} />
+        <Route path="/booking/:showtimeId/checkout" element={<CheckoutPage />} />
+        <Route path="/my-tickets" element={<MyTickets />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/search" element={<SearchPage />} />
 

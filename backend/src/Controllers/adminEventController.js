@@ -64,20 +64,54 @@ export const createShowtimeStep2 = async (req, res) => {
         }
 
         const fullLocation = city ? `${location}, ${city}` : location;
+        const { showtime_id: existingShowtimeId } = req.body;
 
-        const { data: showtime, error: showtimeError } = await supabase
-            .from("showtimes")
-            .insert([
-                {
-                    event_id,
-                    start_time,
-                    city,
-                    latitude,
-                    longitude
-                }
-            ])
-            .select()
-            .single();
+        let showtime;
+        let showtimeError;
+
+        // Tránh tạo suất trùng khi admin quay lại Bước 2 rồi bấm Tiếp lại
+        let targetId = existingShowtimeId ? Number(existingShowtimeId) : null;
+
+        if (!targetId) {
+            const { data: existingRows } = await supabase
+                .from("showtimes")
+                .select("id")
+                .eq("event_id", event_id)
+                .order("id", { ascending: false })
+                .limit(1);
+
+            if (existingRows?.length) {
+                targetId = existingRows[0].id;
+            }
+        }
+
+        const showtimePayload = {
+            event_id,
+            start_time,
+            city,
+            latitude,
+            longitude
+        };
+
+        if (targetId) {
+            const result = await supabase
+                .from("showtimes")
+                .update(showtimePayload)
+                .eq("id", targetId)
+                .eq("event_id", event_id)
+                .select()
+                .single();
+            showtime = result.data;
+            showtimeError = result.error;
+        } else {
+            const result = await supabase
+                .from("showtimes")
+                .insert([showtimePayload])
+                .select()
+                .single();
+            showtime = result.data;
+            showtimeError = result.error;
+        }
 
         if (showtimeError) throw showtimeError;
 
@@ -168,8 +202,28 @@ export const createSeatingChartStep3 = async (req, res) => {
 
         if (error) throw error;
 
-        // Tự động chuyển trạng thái sự kiện sang "published" và lưu bản thiết kế sơ đồ (layout_json)
+        // Xóa suất trùng (0 ghế) còn sót cùng sự kiện — thường do Bước 2 bấm Tiếp nhiều lần
         const { event_id } = req.params;
+        const { data: siblingShowtimes } = await supabase
+            .from("showtimes")
+            .select("id")
+            .eq("event_id", event_id)
+            .neq("id", showtime_id);
+
+        if (siblingShowtimes?.length) {
+            for (const sibling of siblingShowtimes) {
+                const { count } = await supabase
+                    .from("seating_chart")
+                    .select("*", { count: "exact", head: true })
+                    .eq("showtime_id", sibling.id);
+
+                if (count === 0) {
+                    await supabase.from("showtimes").delete().eq("id", sibling.id);
+                }
+            }
+        }
+
+        // Tự động chuyển trạng thái sự kiện sang "published" và lưu bản thiết kế sơ đồ (layout_json)
         console.log("Đang lưu sơ đồ cho sự kiện ID:", event_id);
         
         // Log an toàn

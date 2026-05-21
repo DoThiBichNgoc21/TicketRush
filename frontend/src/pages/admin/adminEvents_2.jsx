@@ -138,6 +138,7 @@ function CreateEventStep2() {
             city,
             latitude: mapPosition[0],
             longitude: mapPosition[1],
+            showtime_id: getCookie("draft_showtime_id") || undefined,
           }),
         }
       );
