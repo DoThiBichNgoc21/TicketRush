@@ -219,7 +219,9 @@ export default function AdminEvents() {
             <span>Sự kiện</span>
           </button>
 
-          <button className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
+          <button 
+            onClick={() => navigate("/admin/usermanagement")}
+            className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
             <span className="material-symbols-outlined">group</span>
             <span>Người dùng</span>
           </button>

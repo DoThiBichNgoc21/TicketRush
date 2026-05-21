@@ -34,6 +34,87 @@ export default function EventDetail() {
         });
     };
 
+    //Kích thước ghế
+    const layout = event.layout_json;
+    const sections = layout
+        ? Array.isArray(layout)
+            ? layout
+            : layout.sections || []
+        : [];
+
+    const totalSeats = sections.reduce((sum, sec) => {
+        return sum + (Number(sec.rows) || 0) * (Number(sec.cols) || 0);
+    }, 0);
+
+    const getAutoScale = (seatCount) => {
+        if (seatCount <= 50) return 2;
+        if (seatCount <= 150) return 0.85;
+        if (seatCount <= 300) return 0.72;
+        if (seatCount <= 600) return 0.6;
+        if (seatCount <= 1000) return 0.5;
+        return 0.42;
+    };
+
+    const autoScale = getAutoScale(totalSeats);
+
+    // Vị trí sân khấu và ghế ra giữa
+    const STAGE_X = 600;
+    const STAGE_Y = 400;
+
+    const getLayoutBounds = (sections) => {
+        const bounds = [
+            {
+                left: STAGE_X - 160,
+                top: STAGE_Y - 45,
+                right: STAGE_X + 160,
+                bottom: STAGE_Y + 45,
+            },
+        ];
+
+        sections.forEach((sec) => {
+            const rows = Number(sec.rows) || 0;
+            const cols = Number(sec.cols) || 0;
+
+            const left = STAGE_X + (Number(sec.x) || 0) + 80;
+            const top = STAGE_Y + (Number(sec.y) || 0) + 80;
+
+            let width = 0;
+            let height = 0;
+
+            if (sec.shape === "arc") {
+                const maxRadius = 60 + ((rows - 1) * 15);
+                width = maxRadius * 2 + 40;
+                height = maxRadius + 60;
+            } else {
+                width = cols * 14 + Math.max(cols - 1, 0) * 4 + 32;
+                height = rows * 14 + Math.max(rows - 1, 0) * 4 + 32;
+            }
+
+            bounds.push({
+                left,
+                top,
+                right: left + width,
+                bottom: top + height,
+            });
+        });
+
+        const left = Math.min(...bounds.map((b) => b.left));
+        const top = Math.min(...bounds.map((b) => b.top));
+        const right = Math.max(...bounds.map((b) => b.right));
+        const bottom = Math.max(...bounds.map((b) => b.bottom));
+
+        return {
+            centerX: (left + right) / 2,
+            centerY: (top + bottom) / 2,
+        };
+    };
+
+    const layoutBounds = getLayoutBounds(sections);
+
+    const layoutOffsetX = STAGE_X - layoutBounds.centerX + 40;
+    const layoutOffsetY = STAGE_Y - layoutBounds.centerY;
+
+
     return (
         <div className="tr-event-detail-root">
             <style>{`
@@ -63,7 +144,7 @@ export default function EventDetail() {
         }
 
         .tr-main-frame {
-          max-width: 1300px;
+          max-width: 1600px;
           margin: 0 auto;
           background: white;
           border-radius: 24px;
@@ -310,17 +391,17 @@ export default function EventDetail() {
                     <div className="tr-header-content" style={{ alignItems: 'flex-end' }}>
                         <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-end' }}>
                             {event.image_url && (
-                                <img 
-                                    src={event.image_url} 
-                                    alt={event.name} 
-                                    style={{ 
-                                        width: '280px', 
-                                        aspectRatio: '16/9', 
-                                        borderRadius: '16px', 
-                                        objectFit: 'cover', 
+                                <img
+                                    src={event.image_url}
+                                    alt={event.name}
+                                    style={{
+                                        width: '280px',
+                                        aspectRatio: '16/9',
+                                        borderRadius: '16px',
+                                        objectFit: 'cover',
                                         boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                                         border: '1px solid rgba(0,0,0,0.08)'
-                                    }} 
+                                    }}
                                 />
                             )}
                             <div style={{ paddingBottom: '4px' }}>
@@ -363,23 +444,27 @@ export default function EventDetail() {
                                             alignItems: 'center',
                                             justifyContent: 'center'
                                         }}>
-                                            <div style={{ 
-                                                position: 'relative', 
-                                                width: '1200px', 
+                                            <div style={{
+                                                position: 'relative',
+                                                width: '1200px',
                                                 height: '800px',
-                                                transform: 'scale(0.65)',
+                                                //transform: 'scale(0.65)',
+                                                transform: 'scale(${autoScale})',
+                                                //transform: `translate(${layoutOffsetX}px, ${layoutOffsetY}px) scale(${autoScale})`,
                                                 transformOrigin: 'center center'
                                             }}>
                                                 {(() => {
-                                                    const layout = event.layout_json;
-                                                    const sections = Array.isArray(layout) ? layout : (layout.sections || []);
+                                                    //const layout = event.layout_json;
+                                                    //const sections = Array.isArray(layout) ? layout : (layout.sections || []);
 
                                                     return (
                                                         <>
                                                             <div style={{
                                                                 position: 'absolute',
-                                                                left: 600,
-                                                                top: 400,
+                                                                //left: 600,
+                                                                //top: 400,
+                                                                left: 600 + layoutOffsetX,
+                                                                top: 400 + layoutOffsetY,
                                                                 transform: 'translate(-50%, -50%)',
                                                                 padding: '16px 40px',
                                                                 backgroundColor: '#18181b',
@@ -398,8 +483,10 @@ export default function EventDetail() {
                                                             {sections.map((sec) => (
                                                                 <div key={sec.id} style={{
                                                                     position: 'absolute',
-                                                                    left: 600 + sec.x + 80,
-                                                                    top: 400 + sec.y + 80,
+                                                                    //left: 600 + sec.x + 80,
+                                                                    //top: 400 + sec.y + 80,
+                                                                    left: 600 + sec.x + 80 + layoutOffsetX,
+                                                                    top: 400 + sec.y + 80 + layoutOffsetY,
                                                                     transform: `rotate(${sec.rotation}deg)`,
                                                                     width: sec.shape === 'arc' ? `${(60 + ((sec.rows - 1) * 15)) * 2 + 40}px` : 'auto',
                                                                     height: sec.shape === 'arc' ? `${(60 + ((sec.rows - 1) * 15)) + 60}px` : 'auto',
