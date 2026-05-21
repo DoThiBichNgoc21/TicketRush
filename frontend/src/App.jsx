@@ -5,6 +5,8 @@ import { Toaster } from './components/ui/sonner';
 import HomePage from './pages/HomePage';
 import UserLogin from './pages/user/Login';
 import UserRegister from './pages/user/Register';
+import VerifyEmailPage from './pages/user/VerifyEmailPage';
+import CheckYourEmailPage from './pages/user/CheckYourEmailPage';
 import UserEventsPage from './pages/user/EventsPage';
 import EventDetailPage from './pages/user/EventDetailPage';
 import BookingPage from './pages/user/BookingPage';
@@ -37,6 +39,8 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<UserLogin />} />
         <Route path="/register" element={<UserRegister />} />
+        <Route path="/check-your-email" element={<CheckYourEmailPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/su-kien" element={<UserEventsPage />} />
         <Route path="/event/:id" element={<EventDetailPage />} />
         <Route path="/booking/:showtimeId" element={<BookingPage />} />

@@ -1,6 +1,6 @@
+import 'dotenv/config';
 import express from 'express'; // Đảm bảo đã import express
 import cors from 'cors';
-import dotenv from 'dotenv';
 import tasksRouter from './src/Routers/tasksRouter.js';
 import authRouter from './src/Routers/authRouter.js'; // Luồng User
 import adminAuthRouter from "./src/Routers/adminAuthRouter.js"; // Luồng Admin
@@ -11,7 +11,6 @@ import bookingRouter from "./src/Routers/bookingRouter.js";
 import ticketRouter from "./src/Routers/ticketRouter.js";
 import { startSeatReleaseWorker } from "./src/jobs/seatReleaseWorker.js";
 
-dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
