@@ -8,6 +8,7 @@ import adminEventRoutes from "./src/Routers/adminEventRoutes.js";
 import eventRoutes from "./src/Routers/adminEventDashboardRouters.js";
 import adminUserManagement from "./src/Routers/adminUserManagementRouters.js";
 import adminRevenue from "./src/Routers/adminRevenueRouter.js";
+import adminInstructionRouter from "./src/Routers/adminInstructionRouter.js";
 
 dotenv.config();
 const app = express();
@@ -26,6 +27,7 @@ app.use("/api/admin/events", adminEventRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/usermanagement", adminUserManagement);
 app.use("/api/revenue", adminRevenue);
+app.use("/api/admin/support/articles", adminInstructionRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

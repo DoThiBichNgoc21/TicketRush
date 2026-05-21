@@ -190,13 +190,6 @@ export function Header() {
               </Link>
             </Button>
 
-            <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 font-semibold text-foreground hover:bg-orange-100 hover:text-orange-900 transition-colors">
-              <User className="w-4 h-4" />
-              Đăng nhập
-            </Button>
-            <Button size="sm" className="hidden sm:flex font-semibold bg-red-600 hover:bg-red-700 text-white">
-              Đăng ký
-            </Button>
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

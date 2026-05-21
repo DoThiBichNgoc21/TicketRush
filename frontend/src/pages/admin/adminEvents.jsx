@@ -128,19 +128,19 @@ export default function AdminEvents() {
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStatus, pagination.page]);
 
   // Initial load & when status/page changes
   useEffect(() => {
     fetchEvents({ search, page: 1 });
     setPagination(prev => ({ ...prev, page: 1 }));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStatus]);
 
   useEffect(() => {
     fetchEvents();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.page]);
 
   // Debounce search: wait 400ms after user stops typing
@@ -176,7 +176,7 @@ export default function AdminEvents() {
       `}</style>
 
       {/* TopNavBar */}
-      <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm font-['Inter']">
+      <header className="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm font-sans">
         <div className="flex items-center gap-8">
           <span className="text-xl font-black tracking-tighter text-zinc-900 dark:text-white">
             SeatMaster Admin
@@ -238,7 +238,7 @@ export default function AdminEvents() {
             <span>Sự kiện</span>
           </button>
 
-          <button 
+          <button
             onClick={() => navigate("/admin/usermanagement")}
             className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
             <span className="material-symbols-outlined">group</span>
@@ -247,15 +247,17 @@ export default function AdminEvents() {
 
           <button
             onClick={() => navigate("/admin/revenue")}
-            className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
-          >
-            <span className="material-symbols-outlined" data-icon="group">group</span>
+            className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
+            <span className="material-symbols-outlined">confirmation_number</span>
             <span>Doanh thu</span>
           </button>
 
-          <button className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
+          <button
+            onClick={() => navigate("/admin/instruction")}
+            className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
+          >
             <span className="material-symbols-outlined">analytics</span>
-            <span>Báo cáo</span>
+            <span>Hỗ trợ & Liên hệ</span>
           </button>
         </nav>
 
@@ -360,8 +362,8 @@ export default function AdminEvents() {
                 <button
                   onClick={() => setActiveStatus("")}
                   className={`px-4 py-2 rounded-md font-bold text-sm ${activeStatus === ""
-                      ? "bg-white text-zinc-900 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-900"
+                    ? "bg-white text-zinc-900 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-900"
                     }`}
                 >
                   Tất cả
@@ -370,8 +372,8 @@ export default function AdminEvents() {
                 <button
                   onClick={() => setActiveStatus("ongoing")}
                   className={`px-4 py-2 rounded-md font-semibold text-sm transition-colors ${activeStatus === "ongoing"
-                      ? "bg-white text-zinc-900 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-900"
+                    ? "bg-white text-zinc-900 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-900"
                     }`}
                 >
                   Đang diễn ra
@@ -380,8 +382,8 @@ export default function AdminEvents() {
                 <button
                   onClick={() => setActiveStatus("upcoming")}
                   className={`px-4 py-2 rounded-md font-semibold text-sm transition-colors ${activeStatus === "upcoming"
-                      ? "bg-white text-zinc-900 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-900"
+                    ? "bg-white text-zinc-900 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-900"
                     }`}
                 >
                   Sắp diễn ra
@@ -390,8 +392,8 @@ export default function AdminEvents() {
                 <button
                   onClick={() => setActiveStatus("ended")}
                   className={`px-4 py-2 rounded-md font-semibold text-sm transition-colors ${activeStatus === "ended"
-                      ? "bg-white text-zinc-900 shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-900"
+                    ? "bg-white text-zinc-900 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-900"
                     }`}
                 >
                   Đã kết thúc
@@ -599,11 +601,10 @@ export default function AdminEvents() {
                       <button
                         key={p}
                         onClick={() => goToPage(p)}
-                        className={`px-3 py-2 rounded font-bold text-sm transition-colors ${
-                          p === pagination.page
-                            ? "bg-[#e00d0d] text-white"
-                            : "border border-zinc-200 hover:bg-white text-zinc-600"
-                        }`}
+                        className={`px-3 py-2 rounded font-bold text-sm transition-colors ${p === pagination.page
+                          ? "bg-[#e00d0d] text-white"
+                          : "border border-zinc-200 hover:bg-white text-zinc-600"
+                          }`}
                       >
                         {p}
                       </button>

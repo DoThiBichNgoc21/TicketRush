@@ -5,7 +5,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
 
 const uiThemeStyles = `
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap");
 
 .material-symbols-outlined {
@@ -478,10 +478,11 @@ function CustomersPage() {
           </button>
 
           <button
-            className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
+            onClick={() => navigate("/admin/instruction")}
+            className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
           >
             <span className="material-symbols-outlined">analytics</span>
-            <span>Báo cáo</span>
+            <span>Hỗ trợ & Liên hệ</span>
           </button>
         </nav>
 

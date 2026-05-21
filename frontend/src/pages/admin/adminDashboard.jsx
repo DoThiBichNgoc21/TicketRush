@@ -55,7 +55,7 @@ export default function AdminDashboard() {
         }
     };
     return (
-        <div className="bg-[#f8f9fa] text-[#191c1d] font-['Inter'] text-[16px] leading-[24px] overflow-hidden">
+        <div className="bg-[#f8f9fa] text-[#191c1d] font-sans text-[16px] leading-[24px] overflow-hidden">
             <style>{`
             .material-symbols-outlined {
                 font - variation - settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -99,15 +99,18 @@ export default function AdminDashboard() {
                     </button>
                     <button
                         onClick={() => navigate("/admin/revenue")}
-                        className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
+                        className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
                     >
-                        <span className="material-symbols-outlined" data-icon="group">group</span>
+                        <span className="material-symbols-outlined">confirmation_number</span>
                         <span>Doanh thu</span>
                     </button>
-                    <a className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm" href="#">
-                        <span className="material-symbols-outlined" data-icon="analytics">analytics</span>
-                        <span>Báo cáo</span>
-                    </a>
+                    <button
+                        onClick={() => navigate("/admin/instruction")}
+                        className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
+                    >
+                        <span className="material-symbols-outlined">analytics</span>
+                        <span>Hỗ trợ & Liên hệ</span>
+                    </button>
                 </nav>
                 <div className="px-6 pt-6 border-t border-gray-200 dark:border-gray-800 space-y-1">
                     <a className="flex items-center py-2 space-x-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-all font-sans font-medium text-sm" href="#">
@@ -123,7 +126,7 @@ export default function AdminDashboard() {
                     </button>
                 </div>
             </aside>
-            
+
             {/* Main Content Area */}
             <main className="ml-64 flex-1 h-screen overflow-y-auto custom-scrollbar">
                 {/* Top Navigation Bar */}
@@ -330,9 +333,9 @@ export default function AdminDashboard() {
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center space-x-4">
                                                         <div className="h-10 w-10 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
-                                                            <img 
-                                                                className="h-full w-full object-cover" 
-                                                                src={event.image_url || "https://via.placeholder.com/40"} 
+                                                            <img
+                                                                className="h-full w-full object-cover"
+                                                                src={event.image_url || "https://via.placeholder.com/40"}
                                                                 alt={event.name}
                                                             />
                                                         </div>
@@ -357,7 +360,7 @@ export default function AdminDashboard() {
                                                     <span className="text-sm font-bold text-gray-900">0 VNĐ</span>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <button 
+                                                    <button
                                                         onClick={() => navigate(`/admin/events`)}
                                                         className="p-2 text-gray-400 hover:text-[#b30004] transition-colors"
                                                     >
