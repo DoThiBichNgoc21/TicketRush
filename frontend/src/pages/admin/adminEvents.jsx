@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { getEvents, toggleEventVisibility, updateEvent } from "../../api/eventApi";
 import { useNavigate } from "react-router-dom";
 
@@ -95,53 +95,72 @@ export default function AdminEvents() {
   const [activeStatus, setActiveStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [globalStats, setGlobalStats] = useState({ total: 0, published: 0 });
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+  const debounceRef = useRef(null);
 
-  const fetchGlobalStats = async () => {
-    try {
-      const result = await getEvents(); // Fetch all events
-      const all = result.events || [];
-      setGlobalStats({
-        total: all.length,
-        published: all.filter((e) => e.status === "published").length,
-      });
-    } catch (error) {
-      console.error("Lỗi lấy thống kê tổng thể:", error);
-    }
-  };
-
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async (overrides = {}) => {
     try {
       setLoading(true);
-
-      const result = await getEvents({
+      const params = {
         search,
         status: activeStatus,
-      });
+        page: pagination.page,
+        ...overrides,
+      };
+      const result = await getEvents(params);
+      const all = result.events || [];
 
-      setEvents(result.events || []);
+      setEvents(all);
+      setPagination({
+        page: result.page || 1,
+        totalPages: result.totalPages || 1,
+        total: result.total || all.length,
+      });
+      // Update global stats from the first full (no-filter) load
+      if (!params.search && !params.status) {
+        setGlobalStats(prev => ({
+          total: result.total ?? prev.total,
+          published: all.filter(e => e.status === "published").length,
+        }));
+      }
     } catch (error) {
       console.error("Lỗi lấy danh sách sự kiện:", error);
     } finally {
       setLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStatus, pagination.page]);
 
+  // Initial load & when status/page changes
   useEffect(() => {
-    fetchGlobalStats();
-  }, []);
+    fetchEvents({ search, page: 1 });
+    setPagination(prev => ({ ...prev, page: 1 }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStatus]);
 
   useEffect(() => {
     fetchEvents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeStatus]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.page]);
+
+  // Debounce search: wait 400ms after user stops typing
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearch(value);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchEvents({ search: value, page: 1 });
+      setPagination(prev => ({ ...prev, page: 1 }));
+    }, 400);
+  };
+
+  const goToPage = (newPage) => {
+    if (newPage < 1 || newPage > pagination.totalPages) return;
+    setPagination(prev => ({ ...prev, page: newPage }));
+  };
 
   const totalEvents = globalStats.total;
   const publishedEvents = globalStats.published;
-
-  const pendingEvents = useMemo(
-    () => events.filter((event) => event.status === "draft").length,
-    [events]
-  );
 
   return (
     <div className="bg-background text-on-background font-body-md antialiased overflow-x-hidden">
@@ -226,9 +245,12 @@ export default function AdminEvents() {
             <span>Người dùng</span>
           </button>
 
-          <button className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
-            <span className="material-symbols-outlined">confirmation_number</span>
-            <span>Vé</span>
+          <button
+            onClick={() => navigate("/admin/revenue")}
+            className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
+          >
+            <span className="material-symbols-outlined" data-icon="group">group</span>
+            <span>Doanh thu</span>
           </button>
 
           <button className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
@@ -385,10 +407,7 @@ export default function AdminEvents() {
 
                   <input
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") fetchEvents();
-                    }}
+                    onChange={handleSearchChange}
                     className="pl-10 pr-4 py-2.5 border border-zinc-200 rounded-lg text-sm w-80 focus:ring-2 focus:ring-[#e00d0d] transition-all"
                     placeholder="Tìm tên sự kiện, nghệ sĩ..."
                     type="text"
@@ -548,33 +567,55 @@ export default function AdminEvents() {
               <p className="text-sm text-zinc-500">
                 Hiển thị{" "}
                 <span className="font-bold text-zinc-900">
-                  {events.length > 0 ? `1-${events.length}` : "0"}
+                  {events.length > 0
+                    ? `${(pagination.page - 1) * 15 + 1}-${(pagination.page - 1) * 15 + events.length}`
+                    : "0"}
                 </span>{" "}
                 trong số{" "}
-                <span className="font-bold text-zinc-900">
-                  {events.length}
-                </span>{" "}
+                <span className="font-bold text-zinc-900">{pagination.total}</span>{" "}
                 sự kiện
               </p>
 
               <div className="flex items-center gap-1">
                 <button
-                  className="p-2 border border-zinc-200 rounded hover:bg-white transition-colors disabled:opacity-50"
-                  disabled
+                  onClick={() => goToPage(pagination.page - 1)}
+                  disabled={pagination.page <= 1}
+                  className="p-2 border border-zinc-200 rounded hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <span className="material-symbols-outlined">
-                    chevron_left
-                  </span>
+                  <span className="material-symbols-outlined">chevron_left</span>
                 </button>
 
-                <button className="px-4 py-2 bg-[#e00d0d] text-white rounded font-bold text-sm">
-                  1
-                </button>
+                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === pagination.totalPages || Math.abs(p - pagination.page) <= 1)
+                  .reduce((acc, p, idx, arr) => {
+                    if (idx > 0 && p - arr[idx - 1] > 1) acc.push("...");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, i) =>
+                    p === "..." ? (
+                      <span key={`dots-${i}`} className="px-2 text-zinc-400 text-sm">...</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => goToPage(p)}
+                        className={`px-3 py-2 rounded font-bold text-sm transition-colors ${
+                          p === pagination.page
+                            ? "bg-[#e00d0d] text-white"
+                            : "border border-zinc-200 hover:bg-white text-zinc-600"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
 
-                <button className="p-2 border border-zinc-200 rounded hover:bg-white transition-colors">
-                  <span className="material-symbols-outlined">
-                    chevron_right
-                  </span>
+                <button
+                  onClick={() => goToPage(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.totalPages}
+                  className="p-2 border border-zinc-200 rounded hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <span className="material-symbols-outlined">chevron_right</span>
                 </button>
               </div>
             </div>

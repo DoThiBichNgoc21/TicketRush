@@ -97,10 +97,13 @@ export default function AdminDashboard() {
                         <span className="material-symbols-outlined" data-icon="group">group</span>
                         <span>Người dùng</span>
                     </button>
-                    <a className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm" href="#">
-                        <span className="material-symbols-outlined" data-icon="confirmation_number">confirmation_number</span>
-                        <span>Vé</span>
-                    </a>
+                    <button
+                        onClick={() => navigate("/admin/revenue")}
+                        className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
+                    >
+                        <span className="material-symbols-outlined" data-icon="group">group</span>
+                        <span>Doanh thu</span>
+                    </button>
                     <a className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm" href="#">
                         <span className="material-symbols-outlined" data-icon="analytics">analytics</span>
                         <span>Báo cáo</span>
@@ -120,6 +123,7 @@ export default function AdminDashboard() {
                     </button>
                 </div>
             </aside>
+            
             {/* Main Content Area */}
             <main className="ml-64 flex-1 h-screen overflow-y-auto custom-scrollbar">
                 {/* Top Navigation Bar */}
