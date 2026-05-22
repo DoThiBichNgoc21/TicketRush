@@ -111,6 +111,16 @@ export const getDiscountCodes = async (req, res) => {
           discount_value,
           created_at,
           updated_at
+        ),
+        discount_code_events (
+          id,
+          event_id,
+          events (
+            id,
+            name,
+            location,
+            date
+          )
         )
       `,
         { count: "exact" }

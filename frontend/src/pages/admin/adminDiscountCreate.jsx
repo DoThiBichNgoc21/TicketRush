@@ -457,12 +457,13 @@ export default function AdminCreateDiscount() {
 }
 */
 
-import { useState } from "react";
+//import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { adminDiscountApi } from "../../api/discountCreateApi";
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
+const API_BASE_URL = "http://localhost:3000";
 export default function AdminCreateDiscount() {
   const navigate = useNavigate();
 
@@ -475,6 +476,11 @@ export default function AdminCreateDiscount() {
     starts_time: "00:00",
     expires_date: "",
     expires_time: "23:59",
+
+    // all = áp dụng tất cả sự kiện
+    // events = chỉ áp dụng sự kiện được chọn
+    apply_scope: "all",
+    event_ids: [],
   });
 
   const [tiers, setTiers] = useState([
@@ -486,6 +492,9 @@ export default function AdminCreateDiscount() {
     },
   ]);
 
+  const [events, setEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
   const handleChange = (field, value) => {
@@ -494,6 +503,32 @@ export default function AdminCreateDiscount() {
       [field]: value,
     }));
   };
+    useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoadingEvents(true);
+
+        const response = await fetch(
+          `${API_BASE_URL}/api/discount/create/event-options`
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || "Không thể lấy danh sách sự kiện");
+        }
+
+        setEvents(result.data || []);
+      } catch (error) {
+        console.error("Fetch events error:", error);
+        alert(error.message || "Không thể lấy danh sách sự kiện");
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   const generateCode = () => {
     let result = "";
@@ -525,6 +560,20 @@ export default function AdminCreateDiscount() {
     setTiers((prev) =>
       prev.map((tier) => (tier.id === id ? { ...tier, [field]: value } : tier))
     );
+  };
+
+  const toggleEvent = (eventId) => {
+    setFormData((prev) => {
+      const currentEventIds = prev.event_ids || [];
+      const exists = currentEventIds.includes(eventId);
+
+      return {
+        ...prev,
+        event_ids: exists
+          ? currentEventIds.filter((id) => id !== eventId)
+          : [...currentEventIds, eventId],
+      };
+    });
   };
 
   const buildDateTime = (date, time) => {
@@ -587,6 +636,11 @@ export default function AdminCreateDiscount() {
       }
     }
 
+    if (formData.apply_scope === "events" && formData.event_ids.length === 0) {
+      alert("Vui lòng chọn ít nhất 1 sự kiện áp dụng mã giảm giá");
+      return false;
+    }
+
     return true;
   };
 
@@ -613,6 +667,9 @@ export default function AdminCreateDiscount() {
           formData.usage_limit === "" ? null : Number(formData.usage_limit),
 
         status: "active",
+
+        apply_scope: formData.apply_scope,
+        event_ids: formData.apply_scope === "events" ? formData.event_ids : [],
 
         starts_at: buildDateTime(formData.starts_date, formData.starts_time),
         expires_at: buildDateTime(formData.expires_date, formData.expires_time),
@@ -776,6 +833,162 @@ export default function AdminCreateDiscount() {
                   value={formData.usage_limit}
                 />
               </div>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-[#E2E8F0] bg-white p-8 shadow-sm">
+            <div className="mb-6 flex items-center gap-2 border-b border-[#edeeef] pb-4">
+              <span className="material-symbols-outlined text-[#b30004]">
+                event
+              </span>
+              <h3 className="text-lg font-bold text-[#b30004]">
+                Phạm vi áp dụng
+              </h3>
+            </div>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label
+                  className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                    formData.apply_scope === "all"
+                      ? "border-[#e00d0d] ring-1 ring-[#e00d0d]"
+                      : "border-[#e8bcb6]"
+                  }`}
+                >
+                  <input
+                    checked={formData.apply_scope === "all"}
+                    className="sr-only"
+                    name="apply_scope"
+                    onChange={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        apply_scope: "all",
+                        event_ids: [],
+                      }))
+                    }
+                    type="radio"
+                    value="all"
+                  />
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[#191c1d]">
+                        Tất cả sự kiện
+                      </p>
+                      <p className="mt-1 text-sm text-[#5f5e5e]">
+                        Mã giảm giá có thể dùng cho mọi sự kiện.
+                      </p>
+                    </div>
+
+                    <span className="material-symbols-outlined text-[#b30004]">
+                      public
+                    </span>
+                  </div>
+                </label>
+
+                <label
+                  className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                    formData.apply_scope === "events"
+                      ? "border-[#e00d0d] ring-1 ring-[#e00d0d]"
+                      : "border-[#e8bcb6]"
+                  }`}
+                >
+                  <input
+                    checked={formData.apply_scope === "events"}
+                    className="sr-only"
+                    name="apply_scope"
+                    onChange={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        apply_scope: "events",
+                      }))
+                    }
+                    type="radio"
+                    value="events"
+                  />
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[#191c1d]">
+                        Chọn từng sự kiện
+                      </p>
+                      <p className="mt-1 text-sm text-[#5f5e5e]">
+                        Mã chỉ áp dụng cho những sự kiện được chọn.
+                      </p>
+                    </div>
+
+                    <span className="material-symbols-outlined text-[#b30004]">
+                      confirmation_number
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {formData.apply_scope === "events" && (
+                <div className="rounded-xl border border-[#e8bcb6] bg-[#f3f4f5] p-4">
+                  <div className="mb-4 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-[#191c1d]">
+                      Danh sách sự kiện
+                    </p>
+
+                    <span className="text-sm text-[#5f5e5e]">
+                      Đã chọn {formData.event_ids.length} sự kiện
+                    </span>
+                  </div>
+
+                  {loadingEvents ? (
+                    <p className="text-sm text-[#5f5e5e]">
+                      Đang tải danh sách sự kiện...
+                    </p>
+                  ) : events.length === 0 ? (
+                    <p className="text-sm text-[#5f5e5e]">
+                      Chưa có sự kiện nào để chọn.
+                    </p>
+                  ) : (
+                    <div className="max-h-72 space-y-3 overflow-y-auto pr-2">
+                      {events.map((eventItem) => {
+                        const eventId = Number(eventItem.id);
+                        const checked = formData.event_ids.includes(eventId);
+
+                        return (
+                          <label
+                            className={`flex cursor-pointer items-center justify-between rounded-lg border bg-white p-4 transition-all ${
+                              checked
+                                ? "border-[#e00d0d] ring-1 ring-[#e00d0d]"
+                                : "border-[#e8bcb6]"
+                            }`}
+                            key={eventItem.id}
+                          >
+                            <div className="flex items-center gap-3">
+                              <input
+                                checked={checked}
+                                className="h-4 w-4 accent-[#b30004]"
+                                onChange={() => toggleEvent(eventId)}
+                                type="checkbox"
+                              />
+
+                              <div>
+                                <p className="text-sm font-semibold text-[#191c1d]">
+                                  {eventItem.name}
+                                </p>
+
+                                <p className="text-sm text-[#5f5e5e]">
+                                  {eventItem.location || "Chưa có địa điểm"}
+                                  {eventItem.date ? ` • ${eventItem.date}` : ""}
+                                </p>
+                              </div>
+                            </div>
+
+                            <span className="text-xs font-semibold text-[#b30004]">
+                              ID: {eventItem.id}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </section>
 

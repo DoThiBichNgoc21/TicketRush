@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    getDiscountCodes,
-    getDiscountStats,
-    createDiscountCode,
-    deleteDiscountCode,
+  getDiscountCodes,
+  getDiscountStats,
+  createDiscountCode,
+  deleteDiscountCode,
 } from "../../api/discountApi";
 
 
 const navItems = [
-    { icon: "dashboard", label: "Dashboard" },
-    { icon: "event", label: "Events" },
-    { icon: "shopping_cart", label: "Orders" },
-    { icon: "group", label: "Customers" },
-    { icon: "confirmation_number", label: "Reports", active: true },
-    { icon: "settings", label: "Settings" },
+  { icon: "dashboard", label: "Dashboard" },
+  { icon: "event", label: "Events" },
+  { icon: "shopping_cart", label: "Orders" },
+  { icon: "group", label: "Customers" },
+  { icon: "confirmation_number", label: "Reports", active: true },
+  { icon: "settings", label: "Settings" },
 ];
 
 /*
@@ -63,155 +63,135 @@ const discountRows = [
 */
 
 function MaterialIcon({ children, className = "" }) {
-    return (
-        <span className={`material-symbols-outlined ${className}`}>
-            {children}
-        </span>
-    );
+  return (
+    <span className={`material-symbols-outlined ${className}`}>
+      {children}
+    </span>
+  );
 }
 
 function formatNumber(value) {
-    return new Intl.NumberFormat("vi-VN").format(Number(value || 0));
+  return new Intl.NumberFormat("vi-VN").format(Number(value || 0));
 }
 
 
 function formatMoney(value) {
-    const numberValue = Number(value || 0);
+  const numberValue = Number(value || 0);
 
-    if (numberValue >= 1000000000) {
-        return `${(numberValue / 1000000000).toFixed(1)}B`;
-    }
+  if (numberValue >= 1000000000) {
+    return `${(numberValue / 1000000000).toFixed(1)}B`;
+  }
 
-    if (numberValue >= 1000000) {
-        return `${(numberValue / 1000000).toFixed(1)}M`;
-    }
+  if (numberValue >= 1000000) {
+    return `${(numberValue / 1000000).toFixed(1)}M`;
+  }
 
-    return new Intl.NumberFormat("vi-VN").format(numberValue);
+  return new Intl.NumberFormat("vi-VN").format(numberValue);
 }
 
 //Hiển thị các thông số của mã giảm giá ở bảng thống kê.
 function formatDiscountType(type) {
-    const typeMap = {
-        percentage: "Phần trăm",
-        fixed: "Cố định",
-        tiered: "Bậc thang",
-    };
+  const typeMap = {
+    percentage: "Phần trăm",
+    fixed: "Cố định",
+    tiered: "Bậc thang",
+  };
 
-    return typeMap[type] || type || "";
+  return typeMap[type] || type || "";
 }
 
 function formatDiscountValue(row) {
-    if (row.discount_type === "percentage") {
-        return `${Number(row.discount_value || 0)}%`;
+  if (row.discount_type === "percentage") {
+    return `${Number(row.discount_value || 0)}%`;
+  }
+
+  if (row.discount_type === "fixed") {
+    return `${formatNumber(row.discount_value)} VNĐ`;
+  }
+
+  if (row.discount_type === "tiered") {
+    const tiers = row.discount_code_tiers || [];
+
+    if (tiers.length > 0) {
+      const values = tiers.map((tier) => Number(tier.discount_value));
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+
+      if (min === max) {
+        return `${max}%`;
+      }
+
+      return `${min}-${max}%`;
     }
 
-    if (row.discount_type === "fixed") {
-        return `${formatNumber(row.discount_value)} VNĐ`;
-    }
+    return "Theo bậc";
+  }
 
-    if (row.discount_type === "tiered") {
-        const tiers = row.discount_code_tiers || [];
-
-        if (tiers.length > 0) {
-            const values = tiers.map((tier) => Number(tier.discount_value));
-            const min = Math.min(...values);
-            const max = Math.max(...values);
-
-            if (min === max) {
-                return `${max}%`;
-            }
-
-            return `${min}-${max}%`;
-        }
-
-        return "Theo bậc";
-    }
-
-    return "";
+  return "";
 }
 
 function formatStatus(status) {
-    const statusMap = {
-        active: "Hoạt động",
-        expired: "Hết hạn",
-        disabled: "Tạm tắt",
-    };
+  const statusMap = {
+    active: "Hoạt động",
+    expired: "Hết hạn",
+    disabled: "Tạm tắt",
+  };
 
-    return statusMap[status] || status || "";
+  return statusMap[status] || status || "";
 }
 
 function getStatusClass(status) {
-    if (status === "expired") return "expired";
-    if (status === "disabled") return "expired";
-    return "active";
+  if (status === "expired") return "expired";
+  if (status === "disabled") return "expired";
+  return "active";
 }
 
 export default function AdminDiscountManagement() {
-    const navigate = useNavigate();
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [discountRows, setDiscountRows] = useState([]);
-    const [stats, setStats] = useState({ activeCount: 0, totalUsed: 0, estimatedSaved: 0 });
-    const [loading, setLoading] = useState(true);
-    const [formData, setFormData] = useState({
-        code: "",
-        discount_type: "percentage",
-        discount_value: "",
-        usage_limit: "",
-        starts_at: "",
-        expires_at: "",
-        status: "active",
-    });
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDiscount, setSelectedDiscount] = useState(null);
+  const [discountRows, setDiscountRows] = useState([]);
+  const [stats, setStats] = useState({ activeCount: 0, totalUsed: 0, estimatedSaved: 0 });
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        loadData();
-    }, []);
+  useEffect(() => {
+    loadData();
+  }, []);
 
-    const loadData = async () => {
-        setLoading(true);
-        try {
-            const [codesRes, statsRes] = await Promise.all([
-                getDiscountCodes(),
-                getDiscountStats(),
-            ]);
-            setDiscountRows(codesRes.data || []);
-            setStats(statsRes.data || { activeCount: 0, totalUsed: 0, estimatedSaved: 0 });
-        } catch (err) {
-            console.error("Lỗi tải dữ liệu:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [codesRes, statsRes] = await Promise.all([
+        getDiscountCodes(),
+        getDiscountStats(),
+      ]);
+      setDiscountRows(codesRes.data || []);
+      setStats(statsRes.data || { activeCount: 0, totalUsed: 0, estimatedSaved: 0 });
+    } catch (err) {
+      console.error("Lỗi tải dữ liệu:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleCreate = async () => {
-        try {
-            await createDiscountCode({
-                ...formData,
-                discount_value: Number(formData.discount_value),
-                usage_limit: formData.usage_limit === "" ? null : Number(formData.usage_limit),
-                starts_at: formData.starts_at || null,
-                expires_at: formData.expires_at || null,
-            });
-            setIsModalOpen(false);
-            setFormData({ code: "", discount_type: "percentage", discount_value: "", usage_limit: "", starts_at: "", expires_at: "", status: "active" });
-            loadData();
-        } catch (err) {
-            alert(err.message);
-        }
-    };
+  const handleView = (discount) => {
+    setSelectedDiscount(discount);
+    setIsModalOpen(true);
+  };
 
-    const handleDelete = async (id, code) => {
-        if (!window.confirm(`Xóa mã "${code}"?`)) return;
-        try {
-            await deleteDiscountCode(id);
-            loadData();
-        } catch (err) {
-            alert(err.message);
-        }
-    };
+  const handleDelete = async (id, code) => {
+    if (!window.confirm(`Xóa mã "${code}"?`)) return;
+    try {
+      await deleteDiscountCode(id);
+      loadData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
-    return (
-        <div className="ticketrush-page">
-            <style>{`
+  return (
+    <div className="ticketrush-page">
+      <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
         .ticketrush-page {
@@ -764,7 +744,7 @@ export default function AdminDiscountManagement() {
           display: flex;
           flex-direction: column;
           width: 100%;
-          max-width: 672px;
+          max-width: 896px;
           max-height: 92vh;
           overflow: hidden;
           border-radius: 8px;
@@ -938,165 +918,165 @@ export default function AdminDiscountManagement() {
         }
       `}</style>
 
-            {/* SideNavBar */}
-            <aside className="h-screen w-64 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 fixed left-0 top-0 z-50 flex flex-col py-6 space-y-2">
-                <div className="px-6 mb-8">
-                    <h1 className="text-lg font-bold text-gray-900 dark:text-white">Cổng Quản Trị</h1>
-                    <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mt-1">TicketRush HQ</p>
-                </div>
+      {/* SideNavBar */}
+      <aside className="h-screen w-64 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 fixed left-0 top-0 z-50 flex flex-col py-6 space-y-2">
+        <div className="px-6 mb-8">
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Cổng Quản Trị</h1>
+          <p className="text-xs text-gray-500 uppercase tracking-widest font-bold mt-1">TicketRush HQ</p>
+        </div>
 
-                <nav className="flex-1 space-y-1">
-                    <button
-                        onClick={() => navigate("/admin/dashboard")}
-                        className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
-                    >
-                        <span className="material-symbols-outlined">dashboard</span>
-                        <span>Bảng điều khiển</span>
-                    </button>
+        <nav className="flex-1 space-y-1">
+          <button
+            onClick={() => navigate("/admin/dashboard")}
+            className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
+          >
+            <span className="material-symbols-outlined">dashboard</span>
+            <span>Bảng điều khiển</span>
+          </button>
 
-                    <button
-                        onClick={() => navigate("/admin/events")}
-                        className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
-                    >
-                        <span className="material-symbols-outlined">calendar_today</span>
-                        <span>Sự kiện</span>
-                    </button>
+          <button
+            onClick={() => navigate("/admin/events")}
+            className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
+          >
+            <span className="material-symbols-outlined">calendar_today</span>
+            <span>Sự kiện</span>
+          </button>
 
-                    <button
-                        onClick={() => navigate("/admin/usermanagement")}
-                        className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
-                        <span className="material-symbols-outlined">group</span>
-                        <span>Người dùng</span>
-                    </button>
+          <button
+            onClick={() => navigate("/admin/usermanagement")}
+            className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
+            <span className="material-symbols-outlined">group</span>
+            <span>Người dùng</span>
+          </button>
 
-                    <button
-                        onClick={() => navigate("/admin/revenue")}
-                        className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
-                        <span className="material-symbols-outlined">analytics</span>
-                        <span>Doanh thu</span>
-                    </button>
+          <button
+            onClick={() => navigate("/admin/revenue")}
+            className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left">
+            <span className="material-symbols-outlined">analytics</span>
+            <span>Doanh thu</span>
+          </button>
 
-                    <button
-                        onClick={() => navigate("/admin/discount")}
-                        className="flex items-center w-full px-6 py-3 space-x-3 bg-red-50 text-red-600 border-l-4 border-red-600 active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
-                    >
-                        <span className="material-symbols-outlined">confirmation_number</span>
-                        <span>Mã giảm giá</span>
-                    </button>
+          <button
+            onClick={() => navigate("/admin/discount")}
+            className="flex items-center w-full px-6 py-3 space-x-3 bg-red-50 text-red-600 border-l-4 border-red-600 active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
+          >
+            <span className="material-symbols-outlined">confirmation_number</span>
+            <span>Mã giảm giá</span>
+          </button>
 
-                    <button
-                        onClick={() => navigate("/admin/instruction")}
-                        className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
-                    >
-                        <span className="material-symbols-outlined">help</span>
-                        <span>Hỗ trợ & Liên hệ</span>
-                    </button>
-                </nav>
+          <button
+            onClick={() => navigate("/admin/instruction")}
+            className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
+          >
+            <span className="material-symbols-outlined">help</span>
+            <span>Hỗ trợ & Liên hệ</span>
+          </button>
+        </nav>
 
-                <div className="px-6 pt-6 border-t border-gray-200 space-y-1">
-                    <button
-                        onClick={() => navigate("/")}
-                        className="flex items-center w-full py-2 space-x-3 text-gray-600 hover:text-gray-900 transition-all font-sans font-medium text-sm text-left"
-                    >
-                        <span className="material-symbols-outlined">logout</span>
-                        <span>Đăng xuất</span>
-                    </button>
-                </div>
-            </aside>
+        <div className="px-6 pt-6 border-t border-gray-200 space-y-1">
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center w-full py-2 space-x-3 text-gray-600 hover:text-gray-900 transition-all font-sans font-medium text-sm text-left"
+          >
+            <span className="material-symbols-outlined">logout</span>
+            <span>Đăng xuất</span>
+          </button>
+        </div>
+      </aside>
 
-            <header className="topbar">
-                <div className="search-wrap">
-                    <MaterialIcon>search</MaterialIcon>
-                    <input
-                        className="search-input"
-                        placeholder="Tìm kiếm mã giảm giá..."
-                        type="text"
-                    />
-                </div>
+      <header className="topbar">
+        <div className="search-wrap">
+          <MaterialIcon>search</MaterialIcon>
+          <input
+            className="search-input"
+            placeholder="Tìm kiếm mã giảm giá..."
+            type="text"
+          />
+        </div>
 
-                <div className="top-actions">
-                    <button className="icon-button" type="button" aria-label="Thông báo">
-                        <MaterialIcon>notifications</MaterialIcon>
-                        <span className="notification-dot" />
-                    </button>
+        <div className="top-actions">
+          <button className="icon-button" type="button" aria-label="Thông báo">
+            <MaterialIcon>notifications</MaterialIcon>
+            <span className="notification-dot" />
+          </button>
 
-                    <button className="icon-button" type="button" aria-label="Tài khoản">
-                        <MaterialIcon>account_circle</MaterialIcon>
-                    </button>
-                </div>
-            </header>
+          <button className="icon-button" type="button" aria-label="Tài khoản">
+            <MaterialIcon>account_circle</MaterialIcon>
+          </button>
+        </div>
+      </header>
 
-            <main className="main">
-                <div className="page-header">
-                    <div>
-                        <h2 className="page-title">Quản lý Mã giảm giá</h2>
-                        <p className="page-subtitle">
-                            Quản lý và theo dõi các chiến dịch ưu đãi vé sự kiện.
-                        </p>
-                    </div>
+      <main className="main">
+        <div className="page-header">
+          <div>
+            <h2 className="page-title">Quản lý Mã giảm giá</h2>
+            <p className="page-subtitle">
+              Quản lý và theo dõi các chiến dịch ưu đãi vé sự kiện.
+            </p>
+          </div>
 
-                    <button
-                      onClick={() => navigate("/api/discount/create")}
-                      className="bg-[#e00d0d] text-white px-6 py-2.5 rounded font-bold flex items-center gap-2 hover:bg-[#b30004] transition-all shadow-md active:scale-95"
-                    >
-                      <span className="material-symbols-outlined">add</span>
-                      Tạo mã mới
-                    </button>
-                </div>
+          <button
+            onClick={() => navigate("/api/discount/create")}
+            className="bg-[#e00d0d] text-white px-6 py-2.5 rounded font-bold flex items-center gap-2 hover:bg-[#b30004] transition-all shadow-md active:scale-95"
+          >
+            <span className="material-symbols-outlined">add</span>
+            Tạo mã mới
+          </button>
+        </div>
 
-                <section className="stats-grid">
-                  <div className="stat-card">
-                      <div className="stat-icon red">
-                          <MaterialIcon>verified</MaterialIcon>
-                      </div>
-                      <div>
-                          <p className="stat-label">Mã đang hoạt động</p>
-                          <p className="stat-value">
-                              {loading ? "..." : formatNumber(stats.activeCount)}
-                          </p>
-                      </div>
-                  </div>
+        <section className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon red">
+              <MaterialIcon>verified</MaterialIcon>
+            </div>
+            <div>
+              <p className="stat-label">Mã đang hoạt động</p>
+              <p className="stat-value">
+                {loading ? "..." : formatNumber(stats.activeCount)}
+              </p>
+            </div>
+          </div>
 
-                  <div className="stat-card">
-                      <div className="stat-icon blue">
-                          <MaterialIcon>analytics</MaterialIcon>
-                      </div>
-                      <div>
-                          <p className="stat-label">Tổng lượt sử dụng</p>
-                          <p className="stat-value">
-                              {loading ? "..." : formatNumber(stats.totalUsed)}
-                          </p>
-                      </div>
-                  </div>
+          <div className="stat-card">
+            <div className="stat-icon blue">
+              <MaterialIcon>analytics</MaterialIcon>
+            </div>
+            <div>
+              <p className="stat-label">Tổng lượt sử dụng</p>
+              <p className="stat-value">
+                {loading ? "..." : formatNumber(stats.totalUsed)}
+              </p>
+            </div>
+          </div>
 
-                  <div className="stat-card">
-                      <div className="stat-icon gray">
-                          <MaterialIcon>savings</MaterialIcon>
-                      </div>
-                      <div>
-                          <p className="stat-label">Doanh thu tiết kiệm</p>
-                          <p className="stat-value">
-                              {loading ? "..." : formatMoney(stats.estimatedSaved)}{" "}
-                              <span className="currency">VNĐ</span>
-                          </p>
-                      </div>
-                  </div>
-              </section>
+          <div className="stat-card">
+            <div className="stat-icon gray">
+              <MaterialIcon>savings</MaterialIcon>
+            </div>
+            <div>
+              <p className="stat-label">Doanh thu tiết kiệm</p>
+              <p className="stat-value">
+                {loading ? "..." : formatMoney(stats.estimatedSaved)}{" "}
+                <span className="currency">VNĐ</span>
+              </p>
+            </div>
+          </div>
+        </section>
 
-                <section className="table-card">
-                    <div className="table-scroll">
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th>Mã</th>
-                                    <th>Loại</th>
-                                    <th>Giá trị</th>
-                                    <th>Lượt dùng / Giới hạn</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
-                                </tr>
-                            </thead>
-{/*
+        <section className="table-card">
+          <div className="table-scroll">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Mã</th>
+                  <th>Loại</th>
+                  <th>Giá trị</th>
+                  <th>Lượt dùng / Giới hạn</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              {/*
                             <tbody>
                                 {discountRows.map((row) => (
                                     <tr key={row.code}>
@@ -1163,251 +1143,306 @@ export default function AdminDiscountManagement() {
                                 ))}
                             </tbody>
 */}
-                            <tbody>
-                              {loading ? (
-                                  <tr>
-                                      <td colSpan="6" style={{ textAlign: "center", padding: "32px" }}>
-                                          Đang tải dữ liệu...
-                                      </td>
-                                  </tr>
-                              ) : discountRows.length === 0 ? (
-                                  <tr>
-                                      <td colSpan="6" style={{ textAlign: "center", padding: "32px" }}>
-                                          Chưa có mã giảm giá nào.
-                                      </td>
-                                  </tr>
-                              ) : (
-                                  discountRows.map((row) => {
-                                      const isExpired = row.status === "expired";
-                                      const usedCount = Number(row.used_count || 0);
-                                      const usageLimit = row.usage_limit;
-                                      const progress =
-                                          usageLimit && Number(usageLimit) > 0
-                                              ? Math.min((usedCount / Number(usageLimit)) * 100, 100)
-                                              : null;
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: "center", padding: "32px" }}>
+                      Đang tải dữ liệu...
+                    </td>
+                  </tr>
+                ) : discountRows.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: "center", padding: "32px" }}>
+                      Chưa có mã giảm giá nào.
+                    </td>
+                  </tr>
+                ) : (
+                  discountRows.map((row) => {
+                    const isExpired = row.status === "expired";
+                    const usedCount = Number(row.used_count || 0);
+                    const usageLimit = row.usage_limit;
+                    const progress =
+                      usageLimit && Number(usageLimit) > 0
+                        ? Math.min((usedCount / Number(usageLimit)) * 100, 100)
+                        : null;
 
-                                      return (
-                                          <tr key={row.id || row.code}>
-                                              <td>
-                                                  <span className={`code-badge ${isExpired ? "muted" : ""}`}>
-                                                      {row.code}
-                                                  </span>
-                                              </td>
+                    return (
+                      <tr key={row.id || row.code}>
+                        <td>
+                          <span className={`code-badge ${isExpired ? "muted" : ""}`}>
+                            {row.code}
+                          </span>
+                        </td>
 
-                                              <td className={isExpired ? "muted" : ""}>
-                                                  {formatDiscountType(row.discount_type)}
-                                              </td>
+                        <td className={isExpired ? "muted" : ""}>
+                          {formatDiscountType(row.discount_type)}
+                        </td>
 
-                                              <td className={isExpired ? "muted" : ""}>
-                                                  {formatDiscountValue(row)}
-                                              </td>
+                        <td className={isExpired ? "muted" : ""}>
+                          {formatDiscountValue(row)}
+                        </td>
 
-                                              <td className={isExpired ? "muted" : ""}>
-                                                  <div className="usage">
-                                                      <strong>{formatNumber(row.used_count)}</strong>
+                        <td className={isExpired ? "muted" : ""}>
+                          <div className="usage">
+                            <strong>{formatNumber(row.used_count)}</strong>
 
-                                                      <span className="usage-limit">
-                                                          /{" "}
-                                                          {usageLimit === null || usageLimit === undefined
-                                                              ? "∞"
-                                                              : formatNumber(usageLimit)}
-                                                      </span>
+                            <span className="usage-limit">
+                              /{" "}
+                              {usageLimit === null || usageLimit === undefined
+                                ? "∞"
+                                : formatNumber(usageLimit)}
+                            </span>
 
-                                                      {progress !== null && (
-                                                          <div className="progress-track">
-                                                              <div
-                                                                  className="progress-fill"
-                                                                  style={{ width: `${progress}%` }}
-                                                              />
-                                                          </div>
-                                                      )}
-                                                  </div>
-                                              </td>
+                            {progress !== null && (
+                              <div className="progress-track">
+                                <div
+                                  className="progress-fill"
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </td>
 
-                                              <td>
-                                                  <span className={`status ${getStatusClass(row.status)}`}>
-                                                      <span className="status-dot" />
-                                                      {formatStatus(row.status)}
-                                                  </span>
-                                              </td>
+                        <td>
+                          <span className={`status ${getStatusClass(row.status)}`}>
+                            <span className="status-dot" />
+                            {formatStatus(row.status)}
+                          </span>
+                        </td>
 
-                                              <td>
-                                                <div className="row-actions">
-                                                    <button
-                                                        className="row-action delete"
-                                                        type="button"
-                                                        title={`Xóa ${row.code}`}
-                                                        aria-label={`Xóa ${row.code}`}
-                                                        onClick={() => handleDelete(row.id, row.code)}
-                                                    >
-                                                        <MaterialIcon>delete</MaterialIcon>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                          </tr>
-                                      );
-                                  })
-                              )}
-                          </tbody>
-                        </table>
-                    </div>
-
-                    <div className="table-footer">
-                      <span className="table-footer-text">
-                          Hiển thị {discountRows.length} mã
-                      </span>
-                        <div className="pagination">
+                        <td>
+                          <div className="row-actions">
                             <button
-                                className="page-button"
-                                type="button"
-                                aria-label="Trang trước"
+                              className="row-action"
+                              type="button"
+                              title={`Xem chi tiết ${row.code}`}
+                              aria-label={`Xem chi tiết ${row.code}`}
+                              onClick={() => handleView(row)}
                             >
-                                <MaterialIcon>chevron_left</MaterialIcon>
-                            </button>
-
-                            <button className="page-button active" type="button">
-                                1
-                            </button>
-
-                            <button className="page-button" type="button">
-                                2
-                            </button>
-
-                            <button className="page-button" type="button">
-                                3
+                              <MaterialIcon>visibility</MaterialIcon>
                             </button>
 
                             <button
-                                className="page-button"
-                                type="button"
-                                aria-label="Trang sau"
+                              className="row-action delete"
+                              type="button"
+                              title={`Xóa ${row.code}`}
+                              aria-label={`Xóa ${row.code}`}
+                              onClick={() => handleDelete(row.id, row.code)}
                             >
-                                <MaterialIcon>chevron_right</MaterialIcon>
+                              <MaterialIcon>delete</MaterialIcon>
                             </button>
-                        </div>
-                    </div>
-                </section>
-            </main>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
 
-            {isModalOpen && (
-                <div
-                    className="modal-root"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="discount-modal-title"
-                >
-                    <button
-                        className="modal-overlay"
-                        type="button"
-                        aria-label="Đóng modal"
-                        onClick={() => setIsModalOpen(false)}
+          <div className="table-footer">
+            <span className="table-footer-text">
+              Hiển thị {discountRows.length} mã
+            </span>
+            <div className="pagination">
+              <button
+                className="page-button"
+                type="button"
+                aria-label="Trang trước"
+              >
+                <MaterialIcon>chevron_left</MaterialIcon>
+              </button>
+
+              <button className="page-button active" type="button">
+                1
+              </button>
+
+              <button className="page-button" type="button">
+                2
+              </button>
+
+              <button className="page-button" type="button">
+                3
+              </button>
+
+              <button
+                className="page-button"
+                type="button"
+                aria-label="Trang sau"
+              >
+                <MaterialIcon>chevron_right</MaterialIcon>
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {isModalOpen && (
+        <div
+          className="modal-root"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="discount-modal-title"
+        >
+          <button
+            className="modal-overlay"
+            type="button"
+            aria-label="Đóng modal"
+            onClick={() => setIsModalOpen(false)}
+          />
+
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3 id="discount-modal-title" className="modal-title">
+                Chi tiết mã giảm giá
+              </h3>
+
+              <button
+                className="icon-button"
+                type="button"
+                aria-label="Đóng"
+                onClick={() => setIsModalOpen(false)}
+              >
+                <MaterialIcon>close</MaterialIcon>
+              </button>
+            </div>
+
+            {selectedDiscount && (
+              <div className="modal-body">
+                <div className="form-grid">
+                  <div className="field">
+                    <label>Tên mã</label>
+                    <input
+                      className="uppercase cursor-not-allowed opacity-80"
+                      readOnly
+                      value={selectedDiscount.code}
+                      type="text"
                     />
+                  </div>
 
-                    <div className="modal-card">
-                        <div className="modal-header">
-                            <h3 id="discount-modal-title" className="modal-title">
-                                Tạo mã giảm giá mới
-                            </h3>
-
-                            <button
-                                className="icon-button"
-                                type="button"
-                                aria-label="Đóng"
-                                onClick={() => setIsModalOpen(false)}
-                            >
-                                <MaterialIcon>close</MaterialIcon>
-                            </button>
-                        </div>
-
-                        <div className="modal-body">
-                            <div className="form-grid">
-                                <div className="field">
-                                    <label>Tên mã (Code Name)</label>
-                                    <input
-                                        className="uppercase"
-                                        placeholder="Ví dụ: TICKETRUSH50"
-                                        type="text"
-                                    />
-                                </div>
-
-                                <div className="field">
-                                    <label>Loại giảm giá</label>
-
-                                    <select defaultValue="percent">
-                                        <option value="percent">Giảm theo phần trăm (%)</option>
-                                        <option value="fixed">Giảm số tiền cố định (VNĐ)</option>
-                                        <option value="tier">
-                                            Giảm giá theo số lượng (Bậc thang)
-                                        </option>
-                                    </select>
-
-                                    <p className="helper-text">
-                                        Đặt quy tắc bậc thang (vd: đặt 5 ghế giảm 10%, đặt 10 ghế
-                                        giảm 20%).
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="form-grid">
-                                <div className="field">
-                                    <label>Giá trị giảm</label>
-
-                                    <div className="input-suffix">
-                                        <input placeholder="0" type="number" />
-                                        <span>%</span>
-                                    </div>
-                                </div>
-
-                                <div className="field">
-                                    <label>Số lượt dùng tối đa</label>
-                                    <input
-                                        placeholder="Bỏ trống nếu không giới hạn"
-                                        type="number"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="form-grid">
-                                <div className="field">
-                                    <label>Ngày bắt đầu</label>
-                                    <input type="date" />
-                                </div>
-
-                                <div className="field">
-                                    <label>Ngày kết thúc</label>
-                                    <input type="date" />
-                                </div>
-                            </div>
-
-                            <div className="form-grid">
-                                <div className="field">
-                                    <label>Giá trị đơn hàng tối thiểu</label>
-                                    <input placeholder="0 VNĐ" type="number" />
-                                </div>
-
-                                <div className="field">
-                                    <label>Mức giảm tối đa</label>
-                                    <input placeholder="Không giới hạn" type="number" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="modal-footer">
-                            <button
-                                className="secondary-button"
-                                type="button"
-                                onClick={() => setIsModalOpen(false)}
-                            >
-                                Hủy bỏ
-                            </button>
-
-                            <button className="primary-button" type="button">
-                                Lưu thông tin
-                            </button>
-                        </div>
-                    </div>
+                  <div className="field">
+                    <label>Loại giảm giá</label>
+                    <input
+                      className="cursor-not-allowed opacity-80"
+                      readOnly
+                      value={formatDiscountType(selectedDiscount.discount_type)}
+                      type="text"
+                    />
+                  </div>
                 </div>
+
+                <div className="form-grid">
+                  <div className="field">
+                    <label>Giá trị giảm</label>
+                    <div className="input-suffix">
+                      <input
+                        className="cursor-not-allowed opacity-80"
+                        readOnly
+                        value={selectedDiscount.discount_type === "tiered" ? "" : formatNumber(selectedDiscount.discount_value)}
+                        placeholder={selectedDiscount.discount_type === "tiered" ? "Theo bậc thang" : ""}
+                        type="text"
+                      />
+                      {selectedDiscount.discount_type !== "tiered" && (
+                        <span>{selectedDiscount.discount_type === "fixed" ? "VNĐ" : "%"}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="field">
+                    <label>Số lượt dùng tối đa</label>
+                    <input
+                      className="cursor-not-allowed opacity-80"
+                      readOnly
+                      value={selectedDiscount.usage_limit || "Không giới hạn"}
+                      type="text"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-grid">
+                  <div className="field">
+                    <label>Thời gian bắt đầu</label>
+                    <input
+                      className="cursor-not-allowed opacity-80"
+                      readOnly
+                      value={selectedDiscount.starts_at ? new Date(selectedDiscount.starts_at).toLocaleString('vi-VN') : "Không giới hạn"}
+                      type="text"
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label>Thời gian kết thúc</label>
+                    <input
+                      className="cursor-not-allowed opacity-80"
+                      readOnly
+                      value={selectedDiscount.expires_at ? new Date(selectedDiscount.expires_at).toLocaleString('vi-VN') : "Không giới hạn"}
+                      type="text"
+                    />
+                  </div>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block mb-2 text-[#5f5e5e] font-semibold text-sm">Sự kiện áp dụng</label>
+                  {selectedDiscount.apply_scope === "all" || !selectedDiscount.discount_code_events || selectedDiscount.discount_code_events.length === 0 ? (
+                    <div className="p-3 bg-[#f1f5f9] border border-[#e8bcb6] rounded-lg text-[#191c1d] opacity-80 cursor-not-allowed">
+                      Áp dụng cho tất cả sự kiện
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedDiscount.discount_code_events.map((dce) => (
+                        <span key={dce.id} className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#e7e8e9] border border-[#e8bcb6] rounded-full text-sm font-medium text-[#191c1d]">
+                          <MaterialIcon className="text-[16px] text-[#b30004]">local_activity</MaterialIcon>
+                          {dce.events?.name || `Sự kiện #${dce.event_id}`}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {selectedDiscount.discount_type === "tiered" && selectedDiscount.discount_code_tiers && selectedDiscount.discount_code_tiers.length > 0 && (
+                  <div className="col-span-2">
+                    <label className="block mb-2 text-[#5f5e5e] font-semibold text-sm">Bậc thang giảm giá</label>
+                    <div className="border border-[#e8bcb6] rounded-lg overflow-hidden">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-[#f3f4f5] border-b border-[#e8bcb6]">
+                          <tr>
+                            <th className="py-2 px-4 font-semibold text-[#5f5e5e]">Số lượng tối thiểu</th>
+                            <th className="py-2 px-4 font-semibold text-[#5f5e5e]">Loại giảm</th>
+                            <th className="py-2 px-4 font-semibold text-[#5f5e5e]">Giá trị giảm</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedDiscount.discount_code_tiers.map((tier, index) => (
+                            <tr key={index} className="border-b border-[#e8bcb6] last:border-b-0">
+                              <td className="py-2 px-4 text-[#191c1d] font-medium">{tier.min_quantity} vé</td>
+                              <td className="py-2 px-4 text-[#191c1d]">{formatDiscountType(tier.discount_type)}</td>
+                              <td className="py-2 px-4 text-[#191c1d]">
+                                {formatNumber(tier.discount_value)} {tier.discount_type === "fixed" ? "VNĐ" : "%"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
+
+            <div className="modal-footer">
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 }

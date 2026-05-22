@@ -6,11 +6,30 @@ import { supabase } from "../config/supabaseClient.js";
  */
 export const getAllDiscountCodes = async (req, res) => {
   try {
+    /*
     const { data, error } = await supabase
       .from("discount_codes")
       .select(`
         *,
         discount_code_tiers (*)
+      `)
+      .order("created_at", { ascending: false });
+      */
+     const { data, error } = await supabase
+      .from("discount_codes")
+      .select(`
+        *,
+        discount_code_tiers (*),
+        discount_code_events (
+          id,
+          event_id,
+          events (
+            id,
+            name,
+            location,
+            date
+          )
+        )
       `)
       .order("created_at", { ascending: false });
 
@@ -43,7 +62,7 @@ export const getAllDiscountCodes = async (req, res) => {
 export const getDiscountCodeById = async (req, res) => {
   try {
     const { id } = req.params;
-
+/*
     const { data, error } = await supabase
       .from("discount_codes")
       .select(`
@@ -52,7 +71,25 @@ export const getDiscountCodeById = async (req, res) => {
       `)
       .eq("id", id)
       .single();
-
+*/
+    const { data, error } = await supabase
+      .from("discount_codes")
+      .select(`
+        *,
+        discount_code_tiers (*),
+        discount_code_events (
+          id,
+          event_id,
+          events (
+            id,
+            name,
+            location,
+            date
+          )
+        )
+      `)
+      .eq("id", id)
+      .single();
     if (error) {
       console.error("Get discount code by id error:", error);
       return res.status(404).json({
@@ -76,6 +113,39 @@ export const getDiscountCodeById = async (req, res) => {
 };
 
 /**
+ * GET /api/admin/discounts/event-options
+ * Lấy danh sách sự kiện để chọn khi tạo mã giảm giá
+ */
+export const getDiscountEventOptions = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .select("id, name, location, date")
+      .order("date", { ascending: false });
+
+    if (error) {
+      console.error("Get discount event options error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Không thể lấy danh sách sự kiện",
+        error: error.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error("Server error getDiscountEventOptions:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy danh sách sự kiện",
+    });
+  }
+};
+
+/**
  * POST /api/admin/discounts
  * Tạo mã giảm giá mới
  */
@@ -91,6 +161,8 @@ export const createDiscountCode = async (req, res) => {
       starts_at,
       expires_at,
       tiers = [],
+      apply_scope = "all",
+      event_ids = [],
     } = req.body;
 
     if (!code || !discount_type) {
@@ -110,6 +182,22 @@ export const createDiscountCode = async (req, res) => {
      */
     const dbDiscountType =
       discount_type === "fixed_amount" ? "fixed" : discount_type;
+
+    if (!["all", "events"].includes(apply_scope)) {
+      return res.status(400).json({
+        success: false,
+        message: "Phạm vi áp dụng không hợp lệ",
+      });
+    }
+
+    if (apply_scope === "events") {
+      if (!Array.isArray(event_ids) || event_ids.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Vui lòng chọn ít nhất 1 sự kiện áp dụng mã giảm giá",
+        });
+      }
+    }
 
     if (!["percentage", "fixed", "tiered"].includes(dbDiscountType)) {
       return res.status(400).json({
@@ -151,6 +239,7 @@ export const createDiscountCode = async (req, res) => {
           ? null
           : Number(usage_limit),
       status,
+      apply_scope,
       starts_at: starts_at || null,
       expires_at: expires_at || null,
     };
@@ -168,6 +257,47 @@ export const createDiscountCode = async (req, res) => {
         message: "Không thể tạo mã giảm giá",
         error: discountError.message,
       });
+    }
+
+    let insertedEvents = [];
+
+    if (apply_scope === "events") {
+      const eventPayload = event_ids.map((eventId) => ({
+        discount_code_id: discountCode.id,
+        event_id: Number(eventId),
+      }));
+
+      const invalidEvent = eventPayload.find(
+        (item) => !item.event_id || item.event_id <= 0
+      );
+
+      if (invalidEvent) {
+        await supabase.from("discount_codes").delete().eq("id", discountCode.id);
+
+        return res.status(400).json({
+          success: false,
+          message: "Danh sách sự kiện không hợp lệ",
+        });
+      }
+
+      const { data: eventData, error: eventError } = await supabase
+        .from("discount_code_events")
+        .insert(eventPayload)
+        .select();
+
+      if (eventError) {
+        console.error("Create discount events error:", eventError);
+
+        await supabase.from("discount_codes").delete().eq("id", discountCode.id);
+
+        return res.status(500).json({
+          success: false,
+          message: "Không thể gắn mã giảm giá với sự kiện",
+          error: eventError.message,
+        });
+      }
+
+      insertedEvents = eventData;
     }
 
     let insertedTiers = [];
@@ -231,6 +361,7 @@ export const createDiscountCode = async (req, res) => {
       data: {
         ...discountCode,
         discount_code_tiers: insertedTiers,
+        discount_code_events: insertedEvents,
       },
     });
   } catch (error) {
@@ -260,6 +391,8 @@ export const updateDiscountCode = async (req, res) => {
       starts_at,
       expires_at,
       tiers,
+      apply_scope,
+      event_ids,
     } = req.body;
 
     const dbDiscountType =
@@ -269,10 +402,28 @@ export const updateDiscountCode = async (req, res) => {
       updated_at: new Date().toISOString(),
     };
 
+    if (apply_scope !== undefined && !["all", "events"].includes(apply_scope)) {
+      return res.status(400).json({
+        success: false,
+        message: "Phạm vi áp dụng không hợp lệ",
+      });
+    }
+
+    if (
+      apply_scope === "events" &&
+      (!Array.isArray(event_ids) || event_ids.length === 0)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng chọn ít nhất 1 sự kiện áp dụng mã giảm giá",
+      });
+    }
+
     if (code !== undefined) updatePayload.code = code.trim().toUpperCase();
     if (dbDiscountType !== undefined) updatePayload.discount_type = dbDiscountType;
     if (currency !== undefined) updatePayload.currency = currency;
     if (status !== undefined) updatePayload.status = status;
+    if (apply_scope !== undefined) updatePayload.apply_scope = apply_scope;
 
     if (usage_limit !== undefined) {
       updatePayload.usage_limit =
@@ -350,12 +501,56 @@ export const updateDiscountCode = async (req, res) => {
       }
     }
 
+    let updatedEvents = [];
+
+    if (Array.isArray(event_ids)) {
+      const { error: deleteEventError } = await supabase
+        .from("discount_code_events")
+        .delete()
+        .eq("discount_code_id", id);
+
+      if (deleteEventError) {
+        console.error("Delete old discount events error:", deleteEventError);
+        return res.status(500).json({
+          success: false,
+          message: "Không thể xóa danh sách sự kiện cũ",
+          error: deleteEventError.message,
+        });
+      }
+
+      const finalApplyScope = apply_scope || updatedDiscount.apply_scope;
+
+      if (finalApplyScope === "events" && event_ids.length > 0) {
+        const eventPayload = event_ids.map((eventId) => ({
+          discount_code_id: Number(id),
+          event_id: Number(eventId),
+        }));
+
+        const { data: eventData, error: insertEventError } = await supabase
+          .from("discount_code_events")
+          .insert(eventPayload)
+          .select();
+
+        if (insertEventError) {
+          console.error("Insert updated discount events error:", insertEventError);
+          return res.status(500).json({
+            success: false,
+            message: "Không thể cập nhật sự kiện áp dụng",
+            error: insertEventError.message,
+          });
+        }
+
+        updatedEvents = eventData;
+      }
+    }
+
     return res.status(200).json({
       success: true,
       message: "Cập nhật mã giảm giá thành công",
       data: {
         ...updatedDiscount,
         discount_code_tiers: updatedTiers,
+        discount_code_events: updatedEvents,
       },
     });
   } catch (error) {
