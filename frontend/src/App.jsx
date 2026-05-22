@@ -14,6 +14,7 @@ import CheckoutPage from './pages/user/CheckoutPage';
 import MyTickets from './pages/user/MyTickets';
 import ProfilePage from './pages/user/Profile';
 import SearchPage from './pages/user/SearchPage';
+import InstructionPage from './pages/user/InstructionPage';
 
 // --- IMPORT CÁC TRANG CỦA ADMIN ---
 // Lưu ý: Kiểm tra lại đường dẫn file của bạn (adminLogin hay Login) cho đúng với thư mục thực tế
@@ -52,6 +53,8 @@ function App() {
         <Route path="/my-tickets" element={<MyTickets />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/huong-dan" element={<InstructionPage />} />
+        <Route path="/huong-dan/:slug" element={<InstructionPage />} />
 
         {/* LUỒNG CỦA ADMIN (QUẢN TRỊ) */}
         <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
