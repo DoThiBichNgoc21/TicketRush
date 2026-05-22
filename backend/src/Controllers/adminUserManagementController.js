@@ -40,6 +40,9 @@ function getAvatar(user) {
 }
 
 function normalizeUser(row) {
+  const currentYear = new Date().getFullYear();
+  const age = row.birth_year ? currentYear - Number(row.birth_year) : null;
+
   return {
     id: row.id,
     username: row.username,
@@ -49,6 +52,8 @@ function normalizeUser(row) {
     email: row.email,
     phoneNumber: row.phone_number || "",
     gender: row.gender || "Khác",
+    birthYear: row.birth_year || null,
+    age: age !== null ? `${age} tuổi` : "Chưa cập nhật",
     role: row.role,
     status: mapDbStatusToUi(row.status),
     statusRaw: row.status,
@@ -250,6 +255,7 @@ async function getUsers(req, res) {
           last_name,
           phone_number,
           gender,
+          birth_year,
           status,
           created_at,
           updated_at,
@@ -504,6 +510,52 @@ async function updateUserStatus(req, res) {
   }
 }
 
+async function getUserById(req, res) {
+  try {
+    const { id } = req.params;
+
+    const { data, error } = await supabase
+      .from(USER_TABLE)
+      .select(
+        `
+          id,
+          username,
+          email,
+          role,
+          first_name,
+          last_name,
+          phone_number,
+          gender,
+          birth_year,
+          avatar_url,
+          status,
+          created_at,
+          updated_at,
+          last_login
+        `
+      )
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    }
+
+    res.json({
+      data: normalizeUser(data),
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Không thể lấy thông tin người dùng.",
+      error: error.message,
+    });
+  }
+}
+
 async function deleteUser(req, res) {
   try {
     const { id } = req.params;
@@ -527,6 +579,7 @@ async function deleteUser(req, res) {
 
 export {
   getUsers,
+  getUserById,
   getUserStats,
   createUser,
   updateUser,

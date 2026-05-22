@@ -11,7 +11,9 @@ export default function UserRegister() {
     confirmPassword: '',
     first_name: '',
     last_name: '',
-    phone_number: ''
+    phone_number: '',
+    gender: '',
+    birth_year: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -205,6 +207,39 @@ export default function UserRegister() {
                 className="w-full px-3 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
                 placeholder="0901234567"
               />
+            </div>
+
+            {/* Gender + Birth Year */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Giới tính</label>
+                <select
+                  name="gender"
+                  required
+                  value={form.gender}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
+                >
+                  <option value="">Chọn giới tính</option>
+                  <option value="Nam">Nam</option>
+                  <option value="Nữ">Nữ</option>
+                  <option value="Khác">Khác</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Năm sinh</label>
+                <input
+                  type="number"
+                  name="birth_year"
+                  required
+                  min="1900"
+                  max={new Date().getFullYear()}
+                  value={form.birth_year}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
+                  placeholder="2000"
+                />
+              </div>
             </div>
 
             {/* Password */}

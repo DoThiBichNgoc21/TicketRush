@@ -123,7 +123,7 @@ export const loginAdmin = async (req, res) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { username, password, email, first_name, last_name, phone_number } = req.body;
+    const { username, password, email, first_name, last_name, phone_number, gender, birth_year } = req.body;
 
     if (!username || !password || !email) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ username, email và password' });
@@ -163,6 +163,8 @@ export const registerUser = async (req, res) => {
         first_name: first_name || null,
         last_name: last_name || null,
         phone_number: phone_number || null,
+        gender: gender || 'Khác',
+        birth_year: birth_year ? Number(birth_year) : null,
         status: 'pending',
         email_verified: false,
         verification_token_hash: tokenHash,
