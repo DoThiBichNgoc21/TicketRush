@@ -7,11 +7,14 @@ import {
   updateDiscountCode,
   deleteDiscountCode,
   updateDiscountStatus,
+  getDiscountEventOptions,
 } from "../Controllers/adminDiscountCreateController.js";
 
 const router = express.Router();
 
 router.get("/", getAllDiscountCodes);
+
+router.get("/event-options", getDiscountEventOptions);
 
 router.get("/:id", getDiscountCodeById);
 
