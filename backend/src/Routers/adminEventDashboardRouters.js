@@ -10,6 +10,7 @@ import {
   updateEventVisibility,
   setupEventSeats,
   getEventStats,
+  deleteEvent,
 } from "../Controllers/adminEventDashboardController.js";
 
 const router = express.Router();
@@ -26,5 +27,6 @@ router.put("/:id", updateEvent);
 router.patch("/:id/visibility", updateEventVisibility);
 router.post("/:id/seats", setupEventSeats);
 router.get("/:id/stats", getEventStats);
+router.delete("/:id", deleteEvent);
 
 export default router;

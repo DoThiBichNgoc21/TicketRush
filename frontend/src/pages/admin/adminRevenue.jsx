@@ -56,9 +56,9 @@ const RevenueDashboard = () => {
   }, []);
 
   const occupancyData = [
-    { title: "Skyline Music Festival 2024", venue: "Sân vận động Quốc gia Mỹ Đình", date: "15/10/2024", percent: 94, status: "Sắp hết vé", color: "#e00d0d" },
-    { title: "Hội thảo TechVision Global", venue: "Trung tâm Hội nghị Quốc gia", date: "22/10/2024", percent: 62, status: "Đang mở bán", color: "#5f5e5e" },
-    { title: "Giải Bóng rổ VBA Final", venue: "Nhà thi đấu Thanh Trì", date: "05/11/2024", percent: 45, status: "Mới mở bán", color: "#d8e2ff" },
+    //{ title: "Skyline Music Festival 2024", venue: "Sân vận động Quốc gia Mỹ Đình", date: "15/10/2024", percent: 94, status: "Sắp hết vé", color: "#e00d0d" },
+    //{ title: "Hội thảo TechVision Global", venue: "Trung tâm Hội nghị Quốc gia", date: "22/10/2024", percent: 62, status: "Đang mở bán", color: "#5f5e5e" },
+    //{ title: "Giải Bóng rổ VBA Final", venue: "Nhà thi đấu Thanh Trì", date: "05/11/2024", percent: 45, status: "Mới mở bán", color: "#d8e2ff" },
   ];
   /*
     const transactionsData = [
@@ -144,10 +144,6 @@ const RevenueDashboard = () => {
         <header className="flex justify-between items-center h-16 border-b border-gray-200">
           <h1 className="text-xl font-bold" style={{ color: "#b30004" }}>Quản lý Doanh thu & Tỷ lệ lấp đầy</h1>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full border" style={{ borderColor: "#e8bcb6", backgroundColor: "#edeeef" }}>
-              <span className="animate-pulse w-2 h-2 rounded-full" style={{ backgroundColor: "#00FF00" }}></span>
-              <span className="text-xs font-bold text-gray-600 uppercase">Trực tiếp</span>
-            </div>
           </div>
         </header>
 
@@ -158,9 +154,9 @@ const RevenueDashboard = () => {
               <p className="text-xs font-bold text-gray-600 uppercase">Tổng doanh thu</p>
               <span className="material-symbols-outlined p-1 rounded" style={{ backgroundColor: "#ffdad5", color: "#b30004" }}>payments</span>
             </div>
-            <h3 className="mt-2 font-extrabold text-2xl">{(data?.totalRevenue || 1240500000).toLocaleString()}₫</h3>
+            <h3 className="mt-2 font-extrabold text-2xl">{(data?.totalRevenue || 0).toLocaleString()}₫</h3>
             <span className="text-green-600 font-bold text-sm flex items-center gap-1">
-              <span className="material-symbols-outlined text-xs">trending_up</span> +12.4%
+              <span className="material-symbols-outlined text-xs">trending_up</span>
             </span>
           </div>
 
@@ -182,43 +178,7 @@ const RevenueDashboard = () => {
               <span>Dữ liệu thực tế từ hệ thống</span>
             </div>
           </div>
-
-          <div className="p-4 rounded shadow border" style={{ backgroundColor: "#ffffff" }}>
-            <div className="flex justify-between">
-              <p className="text-xs font-bold text-gray-600 uppercase">Tỷ lệ bán trung bình</p>
-              <span className="material-symbols-outlined p-1 rounded" style={{ backgroundColor: "#ffe0b2", color: "#ffa500" }}>meeting_room</span>
-            </div>
-            <h3 className="mt-2 font-extrabold text-2xl">Đang cập nhật</h3>
-            <span className="text-gray-500 font-bold text-sm flex items-center gap-1 mt-1">
-              <span className="material-symbols-outlined text-xs">info</span> Dữ liệu đang thu thập
-            </span>
-          </div>
         </section>
-
-        {/* Revenue Chart */}
-        <section className="p-4 rounded shadow border" style={{ backgroundColor: "#ffffff" }}>
-          <h4 className="font-bold text-gray-800 mb-2">Biến động doanh thu theo thời gian</h4>
-          <p className="text-xs text-gray-500 mb-3">Dữ liệu doanh thu thực tế từ việc bán vé và dịch vụ đi kèm</p>
-          <div className="flex gap-1 mb-2">
-            <button className="px-3 py-1 border rounded text-xs">Ngày</button>
-            <button className="px-3 py-1 border rounded text-xs bg-white shadow text-red-600">Tuần</button>
-            <button className="px-3 py-1 border rounded text-xs">Tháng</button>
-          </div>
-          <div className="relative h-64 flex items-end gap-1 border-b border-l border-gray-300">
-            {chartHeights.map((h, i) => (
-              <div key={i} className="flex-1 relative rounded-t" style={{ height: `${h}%`, backgroundColor: "#ffe0e0" }}>
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] py-0.5 px-1 rounded opacity-0 group-hover:opacity-100">{Math.round(h * 1.05)}M₫</div>
-              </div>
-            ))}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
-              <polyline fill="none" points="0,320 50,280 150,200 250,240 350,120 450,150 550,80 650,100" stroke="#e00d0d" strokeWidth="2" />
-            </svg>
-          </div>
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            {["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"].map((day, i) => <span key={i}>{day}</span>)}
-          </div>
-        </section>
-
         {/* Occupancy & Transactions */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 flex flex-col gap-4">
@@ -232,7 +192,7 @@ const RevenueDashboard = () => {
               </span>
             </div>
 
-            {(data?.occupancy || occupancyData)
+           {(data?.occupancy || occupancyData)
               .slice((occupancyPage - 1) * OCCUPANCY_PER_PAGE, occupancyPage * OCCUPANCY_PER_PAGE)
               .map((e, i) => (
                 <div key={i} className="p-4 rounded shadow border flex flex-col gap-2 bg-white">
@@ -265,6 +225,7 @@ const RevenueDashboard = () => {
               return (
                 <div className="flex items-center justify-between pt-2">
                   <button
+                
                     onClick={() => setOccupancyPage(p => Math.max(p - 1, 1))}
                     disabled={occupancyPage <= 1}
                     className="px-3 py-1.5 text-xs font-bold border rounded hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
@@ -375,7 +336,6 @@ const RevenueDashboard = () => {
                 </tbody>
               </table>
             </div>
-            <button className="mt-2 py-1 text-xs font-bold text-gray-600 hover:text-red-600">Tải báo cáo chi tiết (.CSV)</button>
           </div>
         </div>
       </main>

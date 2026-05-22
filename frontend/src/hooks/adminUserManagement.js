@@ -15,14 +15,14 @@ export default function useUsers() {
     totalUsers: 0,
     newUsers: 0,
     activeRate: 0,
-    genderStats: {
-      Nam: 0,
-      Nữ: 0,
-      Khác: 0,
-    },
-    statusStats: {
-      active: 0,
-      blocked: 0,
+    genderStats: { Nam: 0, Nữ: 0, Khác: 0 },
+    statusStats: { active: 0, blocked: 0 },
+    ageStats: {
+      "<18":  { count: 0, percent: 0 },
+      "18-24": { count: 0, percent: 0 },
+      "25-34": { count: 0, percent: 0 },
+      "35-44": { count: 0, percent: 0 },
+      "45+":  { count: 0, percent: 0 },
     },
   });
 
@@ -83,14 +83,14 @@ export default function useUsers() {
         totalUsers: result.totalUsers || 0,
         newUsers: result.newUsers || 0,
         activeRate: result.activeRate || 0,
-        genderStats: result.genderStats || {
-          Nam: 0,
-          Nữ: 0,
-          Khác: 0,
-        },
-        statusStats: result.statusStats || {
-          active: 0,
-          blocked: 0,
+        genderStats: result.genderStats || { Nam: 0, Nữ: 0, Khác: 0 },
+        statusStats: result.statusStats || { active: 0, blocked: 0 },
+        ageStats: result.ageStats || {
+          "<18":  { count: 0, percent: 0 },
+          "18-24": { count: 0, percent: 0 },
+          "25-34": { count: 0, percent: 0 },
+          "35-44": { count: 0, percent: 0 },
+          "45+":  { count: 0, percent: 0 },
         },
       });
     } catch (err) {
@@ -158,6 +158,7 @@ export default function useUsers() {
   return {
     users,
     stats,
+    setUsers,
     keyword,
     gender,
     status,

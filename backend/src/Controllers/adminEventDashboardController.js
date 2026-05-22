@@ -66,9 +66,68 @@ export const getEvents = async (req, res) => {
       return res.status(400).json({ message: error.message });
     }
 
+    const eventsWithStats = [];
+    if (data && data.length > 0) {
+      const eventIds = data.map((e) => e.id);
+
+      // Lấy toàn bộ vé của các event hiện tại để đếm số vé đã bán (Confirmed)
+      const { data: tickets, error: ticketsError } = await supabase
+        .from("tickets")
+        .select("id, bookings(id, event_id, status)");
+
+      const eventSoldCount = {};
+      if (!ticketsError && tickets) {
+        tickets.forEach((t) => {
+          const booking = Array.isArray(t.bookings) ? t.bookings[0] : t.bookings;
+          if (!booking) return;
+
+          const eventId = booking.event_id;
+          if (!eventId || !eventIds.includes(eventId)) return;
+
+          const bookingStatus = String(booking.status || "").trim().toLowerCase();
+          if (["confirmed", "completed", "success", "paid", "thành công"].includes(bookingStatus)) {
+            eventSoldCount[eventId] = (eventSoldCount[eventId] || 0) + 1;
+          }
+        });
+      }
+
+      // Đếm sức chứa (tổng số ghế) của từng showtime thuộc các event hiện tại
+      const { data: showtimes, error: stError } = await supabase
+        .from("showtimes")
+        .select("id, event_id")
+        .in("event_id", eventIds);
+
+      const eventCapacity = {};
+      if (!stError && showtimes && showtimes.length > 0) {
+        const seatCountResults = await Promise.all(
+          showtimes.map((st) =>
+            supabase
+              .from("seating_chart")
+              .select("*", { count: "exact", head: true })
+              .eq("showtime_id", st.id)
+              .then(({ count }) => ({ eventId: st.event_id, count: count || 0 }))
+          )
+        );
+
+        seatCountResults.forEach(({ eventId, count }) => {
+          if (eventId) {
+            eventCapacity[eventId] = (eventCapacity[eventId] || 0) + count;
+          }
+        });
+      }
+
+      data.forEach((e) => {
+        eventsWithStats.push({
+          ...e,
+          ticketsSold: eventSoldCount[e.id] || 0,
+          totalSeats: eventCapacity[e.id] || 0,
+        });
+      });
+    }
+
     return res.status(200).json({
       message: "Lấy danh sách sự kiện thành công",
-      events: data,
+      events: eventsWithStats,
       total: count,
       page: parseInt(page),
       limit: parseInt(limit),
@@ -211,7 +270,7 @@ export const getSeatingChartByShowtime = async (req, res) => {
       return res.status(404).json({ message: "Sự kiện không khả dụng" });
     }
 
-    await supabase.rpc("expire_stale_seat_locks", { p_hold_seconds: 600 }).catch(() => {});
+    await supabase.rpc("expire_stale_seat_locks", { p_hold_seconds: 600 }).catch(() => { });
 
     let seats;
     try {
@@ -455,4 +514,60 @@ export const toggleEventVisibility = async (req, res) => {
     message: is_visible ? "Đã hiện sự kiện" : "Đã ẩn sự kiện",
     event: data,
   });
+};
+
+export const deleteEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Kiểm tra trạng thái của sự kiện: chỉ cho phép xóa nếu là "draft"
+    const { data: event, error: evErr } = await supabase
+      .from("events")
+      .select("id, status")
+      .eq("id", id)
+      .single();
+
+    if (evErr || !event) {
+      return res.status(404).json({ message: "Không tìm thấy sự kiện" });
+    }
+
+    if (event.status !== "draft") {
+      return res.status(400).json({ message: "Chỉ được phép xóa sự kiện ở trạng thái bản nháp (draft)" });
+    }
+
+    // 2. Tìm các showtimes liên quan
+    const { data: showtimes } = await supabase
+      .from("showtimes")
+      .select("id")
+      .eq("event_id", id);
+
+    // 3. Xóa seating_chart của các showtimes này (nếu có)
+    if (showtimes && showtimes.length > 0) {
+      const showtimeIds = showtimes.map((st) => st.id);
+      await supabase
+        .from("seating_chart")
+        .delete()
+        .in("showtime_id", showtimeIds);
+    }
+
+    // 4. Xóa showtimes
+    await supabase
+      .from("showtimes")
+      .delete()
+      .eq("event_id", id);
+
+    // 5. Xóa event
+    const { error: deleteError } = await supabase
+      .from("events")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) throw deleteError;
+
+    return res.status(200).json({
+      message: "Xóa sự kiện bản nháp thành công",
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Lỗi server khi xóa sự kiện", error: error.message });
+  }
 };
