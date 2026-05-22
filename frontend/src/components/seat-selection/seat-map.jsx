@@ -5,13 +5,59 @@ import { ZoomIn, ZoomOut, RotateCcw, ArrowLeft, Maximize2 } from "lucide-react"
 const seatStatusStyles = {
   available: "bg-blue-500 hover:bg-blue-600 hover:scale-110 cursor-pointer border-blue-600 text-white shadow-sm",
   vip: "bg-amber-400 hover:bg-amber-500 hover:scale-110 cursor-pointer border-amber-600 text-amber-950 shadow-md",
-  selected: "bg-green-500 hover:bg-green-600 hover:scale-110 cursor-pointer border-green-400 ring-4 ring-green-400/50 text-white shadow-[0_0_20px_rgba(34,197,94,0.6)] z-20",
-  sold: "bg-transparent border-2 border-red-500 cursor-not-allowed text-red-500 font-bold",
-  locked: "bg-transparent border border-slate-300 cursor-not-allowed text-slate-300 opacity-40",
+  selected: "bg-green-500 hover:bg-green-600 cursor-pointer border-green-400 ring-4 ring-green-400/50 text-white shadow-[0_0_20px_rgba(34,197,94,0.6)] z-20",
+  sold: "bg-transparent border border-slate-300 cursor-not-allowed text-slate-300 opacity-40",
+  locked: "bg-transparent border-2 border-red-500 cursor-not-allowed text-red-500 font-bold",
 }
 
-export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats = 8, layout = [] }) {
+const seatStatusStylesNoHover = {
+  available: "bg-blue-500 cursor-pointer border-blue-600 text-white shadow-sm",
+  vip: "bg-amber-400 cursor-pointer border-amber-600 text-amber-950 shadow-md",
+  selected: "bg-green-500 cursor-pointer border-green-400 ring-4 ring-green-400/50 text-white shadow-[0_0_20px_rgba(34,197,94,0.6)] z-20",
+  sold: "bg-transparent border border-slate-300 cursor-not-allowed text-slate-300 opacity-40",
+  locked: "bg-transparent border-2 border-red-500 cursor-not-allowed text-red-500 font-bold",
+}
+
+/** Kích thước canvas chi tiết vòng cung — scale theo số hàng/cột thay vì cố định 500px */
+function getArcDetailLayout(rows, cols, seatPx = 36) {
+  const innerRadius = 150
+  const rowStep = 45
+  const r = Math.max(1, parseInt(rows, 10) || 1)
+  const c = Math.max(1, parseInt(cols, 10) || 1)
+  const maxRadius = innerRadius + (r - 1) * rowStep
+  const maxAngleSpread = 120 + (r - 1) * 10
+  const maxRx =
+    Math.sin(((maxAngleSpread / 2) * Math.PI) / 180) * maxRadius
+  const pad = 56
+  const labelBand = 72
+  return {
+    innerRadius,
+    rowStep,
+    maxRadius,
+    seatPx,
+    width: Math.max(360, Math.ceil(maxRx * 2 + seatPx + pad * 2)),
+    height: Math.max(320, Math.ceil(maxRadius + seatPx + labelBand + pad)),
+  }
+}
+
+function getArcSeatTransform(rowIdx, colIdx, totalCols, layout) {
+  const { innerRadius, rowStep, maxRadius } = layout
+  const r = rowIdx - 1
+  const i = colIdx - 1
+  const angleSpread = 120 + r * 10
+  const angleStep = angleSpread / (totalCols - 1 || 1)
+  const startAngle = -angleSpread / 2
+  const angle = startAngle + i * angleStep
+  const radius = innerRadius + r * rowStep
+  const rx = Math.sin((angle * Math.PI) / 180) * radius
+  const ry = -Math.cos((angle * Math.PI) / 180) * radius + maxRadius
+  return { rx, ry, angle }
+}
+
+export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats = 8, layout = [], seatsLoading = false, currentUserId = null, seatActionLoading = false }) {
   const containerRef = useRef(null)
+  const zoomScrollRef = useRef(null)
+  const zoomScrollPos = useRef({ left: 0, top: 0 })
   const [scale, setScale] = useState(1)
   const [zoomedSection, setZoomedSection] = useState(null)
 
@@ -21,23 +67,32 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
   const userGap = 4 * K
   const userPadding = 16 * K
 
-  // Parse layout if it's a string
+  // Parse layout if it's a string, or { sections: [...] }
   const parsedLayout = useMemo(() => {
     if (!layout) return []
+    let raw = layout
     if (typeof layout === "string") {
       try {
-        return JSON.parse(layout)
+        raw = JSON.parse(layout)
       } catch (e) {
         console.error("Error parsing layout_json:", e)
         return []
       }
     }
-    return Array.isArray(layout) ? layout : []
+    if (Array.isArray(raw)) return raw
+    if (raw && Array.isArray(raw.sections)) return raw.sections
+    return []
   }, [layout])
 
   const [activeFloor, setActiveFloor] = useState(
     parsedLayout.length > 0 ? parsedLayout[0].floor : "Tầng 1"
   )
+
+  useEffect(() => {
+    if (!parsedLayout.length) return
+    const floorKeys = [...new Set(parsedLayout.map((s) => s.floor))]
+    setActiveFloor((prev) => (floorKeys.includes(prev) ? prev : floorKeys[0]))
+  }, [parsedLayout])
 
   // Auto-center the scroll container on mount or floor change
   useEffect(() => {
@@ -48,6 +103,34 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
     }
   }, [activeFloor, scale, zoomedSection])
 
+  // Giữ vị trí cuộn khi chọn/bỏ chọn ghế trong màn chi tiết (tránh nhảy)
+  useEffect(() => {
+    const el = zoomScrollRef.current
+    if (!el || !zoomedSection) return
+    el.scrollLeft = zoomScrollPos.current.left
+    el.scrollTop = zoomScrollPos.current.top
+  }, [selectedSeats, zoomedSection])
+
+  // Căn giữa sơ đồ chi tiết một lần khi mở khu vực
+  useEffect(() => {
+    if (!zoomedSection || !zoomScrollRef.current) return
+    const el = zoomScrollRef.current
+    const id = requestAnimationFrame(() => {
+      el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2)
+      el.scrollTop = Math.max(0, (el.scrollHeight - el.clientHeight) / 2)
+      zoomScrollPos.current = { left: el.scrollLeft, top: el.scrollTop }
+    })
+    return () => cancelAnimationFrame(id)
+  }, [zoomedSection])
+
+  const saveZoomScroll = () => {
+    if (!zoomScrollRef.current) return
+    zoomScrollPos.current = {
+      left: zoomScrollRef.current.scrollLeft,
+      top: zoomScrollRef.current.scrollTop,
+    }
+  }
+
   const handleZoomIn = () => setScale(prev => Math.min(prev + 0.1, 2))
   const handleZoomOut = () => setScale(prev => Math.max(prev - 0.1, 0.5))
   const handleResetZoom = () => setScale(1)
@@ -57,56 +140,172 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
   }
 
   const getSeatStatus = (seat) => {
-    if (!seat) return "available"
+    if (!seat) return "skeleton"
     if (isSeatSelected(seat)) return "selected"
-    if (seat.status === "sold" || seat.status === "locked") return seat.status
+    if (seat.status === "sold") return "sold"
+    if (seat.status === "locked") {
+      if (currentUserId && seat.user_id === currentUserId) return "selected"
+      return "locked"
+    }
     
     const type = String(seat.type || "").toUpperCase()
     if (type === "VIP") return "vip"
     return "available"
   }
 
-  const getSeatBySectionPos = (section, rowIdx, colIdx) => {
-    if (!seats || seats.length === 0) return null
-
-    const targetRowId = `${section.id}-${rowIdx}`
-    const rowLetter = String.fromCharCode(64 + rowIdx)
-    
-    return seats.find((s) => {
-      const sRow = String(s.row || "").trim()
-      const sCol = Number(s.column)
-      const sSection = String(s.section || "").trim()
-      
-      if (sRow === targetRowId && sCol === colIdx) return true
-      
-      const isMatchSection = sSection === section.name.trim() || s.section === section.id
-      const isMatchRow = sRow === String(rowIdx) || sRow === rowLetter || sRow.endsWith(`-${rowIdx}`)
-      const isMatchCol = sCol === colIdx
-
-      return isMatchSection && isMatchRow && isMatchCol
-    })
+  const isDefaultSectionName = (name) => {
+    if (!name) return true
+    const n = name.toLowerCase().trim()
+    return (
+      n === "khu vực vòng cung" ||
+      n === "khu vưcj vòng cung" ||
+      n === "khu vực mới" ||
+      n === "khu vực hình chữ nhật" ||
+      n === "section name"
+    )
   }
 
   const floors = useMemo(() => {
     return [...new Set(parsedLayout.map((s) => s.floor))]
   }, [parsedLayout])
 
-  const isDefaultSectionName = (name) => {
-    if (!name) return true
-    const n = name.toLowerCase().trim()
+  const sectionsByFloor = useMemo(() => {
+    const map = new Map()
+    for (const sec of parsedLayout) {
+      const f = String(sec.floor || "Tầng 1").trim()
+      if (!map.has(f)) map.set(f, [])
+      map.get(f).push(sec)
+    }
+    return map
+  }, [parsedLayout])
+
+  /** Index ghế theo (tầng|khu|hàng|cột) — tránh find() lấy nhầm ghế khối khác khi nhiều khu */
+  const seatLookup = useMemo(() => {
+    const map = new Map()
+    const add = (key, seat) => {
+      if (key && !map.has(key)) map.set(key, seat)
+    }
+    for (const s of seats) {
+      const col = Number(s.column)
+      if (!Number.isFinite(col)) continue
+      const row = String(s.row || "").trim()
+      const sec = String(s.section || "").trim()
+      const floor = s.floor != null && s.floor !== "" ? String(s.floor).trim() : ""
+      const type = String(s.type || "").trim().toUpperCase()
+
+      // Admin lưu row = sec_xxx-N → suy ra section id + chỉ số hàng (ổn định khi nhiều khối)
+      const rowParts = row.match(/^(sec_\d+)-(\d+)$/)
+      if (rowParts) {
+        const [, secFromRow, rowIndex] = rowParts
+        add(`${floor}|${secFromRow}|${rowIndex}|${col}`, s)
+        add(`|${secFromRow}|${rowIndex}|${col}`, s)
+      }
+
+      add(`${floor}|${sec}|${row}|${col}`, s)
+      add(`|${sec}|${row}|${col}`, s)
+      add(`${sec}|${row}|${col}`, s)
+      if (type) {
+        add(`${floor}|${type}|${row}|${col}`, s)
+        add(`|${type}|${row}|${col}`, s)
+      }
+    }
+    return map
+  }, [seats])
+
+  const matchSectionStrict = (s, section, floorSections, multiSection) => {
+    const sSection = String(s.section || "").trim()
+    const secId = String(section.id || "").trim()
+    const secName = String(section.name || "").trim()
+
+    if (sSection === secId || sSection === secName) return true
+    if (multiSection) return false
+
+    const secType = String(section.type || "").trim().toUpperCase()
+    const sameTypeOnFloor = floorSections.filter(
+      (sec) => String(sec.type || "").trim().toUpperCase() === secType
+    ).length
+    if (sameTypeOnFloor > 1) return false
+
+    const sType = String(s.type || "").trim().toUpperCase()
     return (
-      n === "khu vực vòng cung" || 
-      n === "khu vưcj vòng cung" || 
-      n === "khu vực mới" || 
-      n === "khu vực hình chữ nhật" ||
-      n === "section name"
+      secType &&
+      isDefaultSectionName(secName) &&
+      (sSection.toUpperCase() === secType || sType === secType)
+    )
+  }
+
+  const matchRowStrict = (s, section, rowIdx, multiSection) => {
+    const sRow = String(s.row || "").trim()
+    const compositeRow = `${section.id}-${rowIdx}`
+    if (sRow === compositeRow) return true
+    if (multiSection) return false
+
+    const rowLetter = String.fromCharCode(64 + rowIdx)
+    return sRow === String(rowIdx) || sRow === rowLetter
+  }
+
+  const getSeatBySectionPos = (section, rowIdx, colIdx) => {
+    if (!seats?.length) return null
+
+    const floor = String(section.floor || "Tầng 1").trim()
+    const secId = String(section.id || "").trim()
+    const secName = String(section.name || "").trim()
+    const secType = String(section.type || "").trim().toUpperCase()
+    const compositeRow = `${secId}-${rowIdx}`
+    const rowLetter = String.fromCharCode(64 + rowIdx)
+    const rowNum = String(rowIdx)
+
+    const floorSections =
+      sectionsByFloor.get(floor) ||
+      parsedLayout.filter((s) => String(s.floor || "Tầng 1").trim() === floor)
+    const multiSection = floorSections.length > 1
+
+    const keyAttempts = [
+      `${floor}|${secId}|${rowIdx}|${colIdx}`,
+      `|${secId}|${rowIdx}|${colIdx}`,
+      `${floor}|${secName}|${compositeRow}|${colIdx}`,
+      `${floor}|${secId}|${compositeRow}|${colIdx}`,
+      `${secName}|${compositeRow}|${colIdx}`,
+      `${secId}|${compositeRow}|${colIdx}`,
+    ]
+
+    if (!multiSection) {
+      keyAttempts.push(
+        `${floor}|${secName}|${rowLetter}|${colIdx}`,
+        `${floor}|${secName}|${rowNum}|${colIdx}`,
+        `${secName}|${rowLetter}|${colIdx}`,
+        `${secName}|${rowNum}|${colIdx}`
+      )
+      if (secType && isDefaultSectionName(secName)) {
+        keyAttempts.push(
+          `${floor}|${secType}|${rowLetter}|${colIdx}`,
+          `${floor}|${secType}|${rowNum}|${colIdx}`,
+          `|${secType}|${rowLetter}|${colIdx}`,
+          `|${secType}|${rowNum}|${colIdx}`
+        )
+      }
+    }
+
+    for (const k of keyAttempts) {
+      if (seatLookup.has(k)) return seatLookup.get(k)
+    }
+
+    return (
+      seats.find((s) => {
+        if (section.floor && s.floor && String(s.floor).trim() !== floor) return false
+        if (!matchSectionStrict(s, section, floorSections, multiSection)) return false
+        if (!matchRowStrict(s, section, rowIdx, multiSection)) return false
+        const sCol = Number(s.column)
+        return Number.isFinite(sCol) && sCol === colIdx
+      }) ?? null
     )
   }
 
   const renderSeat = (seat, type = "Standard", extraProps = {}) => {
-    const { className, style, showLabel = true, labelOverride = null } = extraProps
+    const { className, style, showLabel = true, labelOverride = null, detailView = false, disableHover = false } = extraProps
+    const status = getSeatStatus(seat)
     
-    if (!seat) {
+    if (status === "skeleton") {
       const typeStr = String(type || "").toUpperCase()
       const isVIP = typeStr === "VIP"
       const label = labelOverride !== null ? labelOverride : ""
@@ -114,9 +313,9 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
       return (
         <div 
           className={cn(
-            "rounded-t-lg border-b-2 flex items-center justify-center shadow-sm transition-all duration-200 font-bold",
+            "rounded-t-lg border-b-2 flex items-center justify-center shadow-sm transition-all duration-200 font-bold opacity-30 cursor-not-allowed",
             isVIP 
-              ? "bg-amber-100 border-amber-300 text-amber-500" 
+              ? "bg-amber-50 border-amber-200 text-amber-500" 
               : "bg-blue-50 border-blue-200 text-blue-400",
             className
           )}
@@ -126,27 +325,24 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
             fontSize: `${Math.max(8, (style?.width ? parseInt(style.width) : userSeatSize) / 2.5)}px`,
             ...style 
           }}
-          title="Vị trí này chưa có dữ liệu ghế"
+          title="Vị trí này chưa được khởi tạo sơ đồ ghế"
         >
           {showLabel && label !== "" ? label : <div className="w-1.5 h-1.5 rounded-full bg-current opacity-30" />}
         </div>
       )
     }
 
-    const status = getSeatStatus(seat)
-    const isClickable = status === "available" || status === "vip" || status === "selected"
+    const isClickable =
+      detailView &&
+      !seatActionLoading &&
+      (status === "available" || status === "vip" || status === "selected")
 
-    return (
-      <button
-        key={seat.id}
-        onClick={(e) => {
-          e.stopPropagation()
-          if (isClickable) onSeatClick(seat)
-        }}
-        disabled={!isClickable}
+    const seatClasses = disableHover ? seatStatusStylesNoHover[status] || seatStatusStyles[status] : seatStatusStyles[status]
+    const seatElement = (
+      <div
         className={cn(
           "relative flex items-center justify-center rounded-t-lg border-b-2 font-bold transition-all duration-200 shadow-md",
-          seatStatusStyles[status],
+          seatClasses,
           className
         )}
         style={{ 
@@ -155,9 +351,39 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
           fontSize: `${Math.max(8, (style?.width ? parseInt(style.width) : userSeatSize) / 2.5)}px`,
           ...style 
         }}
-        title={`${seat.type} - Ghế ${seat.column} - ${seat.price.toLocaleString("vi-VN")}đ`}
+        title={`${seat?.type} - Ghế ${seat?.column} - ${seat?.price?.toLocaleString("vi-VN")}đ`}
       >
-        {showLabel ? (labelOverride !== null ? labelOverride : seat.column) : ""}
+        {showLabel ? (labelOverride !== null ? labelOverride : seat?.column) : ""}
+      </div>
+    )
+
+    if (!detailView) {
+      return seatElement
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          saveZoomScroll()
+          if (isClickable && seat) onSeatClick(seat)
+        }}
+        disabled={!isClickable || seatActionLoading}
+        className={cn(
+          "relative flex items-center justify-center rounded-t-lg border-b-2 font-bold transition-all duration-200 shadow-md",
+          seatClasses,
+          className
+        )}
+        style={{ 
+          width: `${userSeatSize}px`, 
+          height: `${userSeatSize}px`,
+          fontSize: `${Math.max(8, (style?.width ? parseInt(style.width) : userSeatSize) / 2.5)}px`,
+          ...style 
+        }}
+        title={`${seat?.type} - Ghế ${seat?.column} - ${seat?.price?.toLocaleString("vi-VN")}đ`}
+      >
+        {showLabel ? (labelOverride !== null ? labelOverride : seat?.column) : ""}
       </button>
     )
   }
@@ -167,12 +393,19 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
     const sec = zoomedSection
     const rows = parseInt(sec.rows) || 0
     const cols = parseInt(sec.cols) || 0
+    const detailSeatPx = 36
+    const arcLayout =
+      sec.shape === "arc" ? getArcDetailLayout(rows, cols, detailSeatPx) : null
+    const halfSeat = detailSeatPx / 2
 
     return (
-      <div className="absolute inset-0 z-[100] bg-white flex flex-col p-8 overflow-auto animate-in fade-in zoom-in duration-300">
-        <div className="flex items-center justify-between mb-8">
+      <div className="absolute inset-0 z-[100] bg-white flex flex-col animate-in fade-in zoom-in duration-300">
+        <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <button 
-            onClick={() => setZoomedSection(null)}
+            onClick={() => {
+              zoomScrollPos.current = { left: 0, top: 0 }
+              setZoomedSection(null)
+            }}
             className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-primary hover:bg-slate-50 rounded-xl transition-all font-bold"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -180,14 +413,19 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
           </button>
           <div className="text-center">
             <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">
-              {isDefaultSectionName(sec.name) ? "Chi tiết khu vực" : sec.name}
+              {sec.name || "Chi tiết khu vực"}
             </h3>
             <p className="text-sm text-slate-500 font-medium">Chọn ghế của bạn tại đây</p>
           </div>
           <div className="w-[180px]" /> {/* Spacer */}
         </div>
 
-        <div className="flex-1 flex items-center justify-center min-h-[400px]">
+        <div
+          ref={zoomScrollRef}
+          onScroll={saveZoomScroll}
+          className="flex-1 min-h-0 overflow-auto overscroll-contain px-4 py-6 zoom-detail-scroll"
+        >
+          <div className="flex justify-center w-max min-w-full mx-auto shrink-0">
           {sec.shape === "rectangle" ? (
             <div className="relative p-12 bg-slate-50 rounded-[2rem] border border-slate-200 shadow-inner">
               {/* Column Numbers Header */}
@@ -216,8 +454,9 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
                       {Array.from({ length: cols }).map((_, c) => {
                         const seat = getSeatBySectionPos(sec, r + 1, c + 1)
                         return (
-                          <div key={`${r}-${c}`} className="flex items-center justify-center">
+                          <div key={`${sec.id}-${r}-${c}`} className="flex items-center justify-center">
                             {renderSeat(seat, sec.type, {
+                              detailView: true,
                               style: { width: '40px', height: '40px', fontSize: '14px' }
                             })}
                           </div>
@@ -232,25 +471,39 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
               </div>
             </div>
           ) : (
-            <div className="relative w-full max-w-4xl h-[500px] flex items-center justify-center bg-slate-50 rounded-[2rem] border border-slate-200 shadow-inner overflow-hidden">
+            <div
+              className="relative bg-slate-50 rounded-[2rem] border border-slate-200 shadow-inner shrink-0"
+              style={{
+                width: `${arcLayout.width}px`,
+                height: `${arcLayout.height}px`,
+              }}
+            >
                <div className="relative w-full h-full">
-                  {/* Column Labels (Letters A, B, C...) at the inner head of each branch */}
+                  {/* Column labels */}
                   {Array.from({ length: cols }).map((_, i) => {
-                    const angleSpread = 120 // Matches first row (r=0)
-                    const angleStep = angleSpread / (cols - 1 || 1)
-                    const startAngle = -angleSpread / 2
-                    const angle = startAngle + i * angleStep
-                    const labelRadius = 100 // Adjusted relative to new inner radius 150
-                    const lx = Math.sin((angle * Math.PI) / 180) * labelRadius
-                    const ryOffset = (150 + (rows - 1) * 45)
-                    const ly = -Math.cos((angle * Math.PI) / 180) * labelRadius + ryOffset
+                    // 1. Lấy đúng góc của cột ghế thứ i + 1 (Đồng bộ tuyệt đối với logic vẽ ghế)
+                    const { angle } = getArcSeatTransform(1, i + 1, cols, arcLayout)
+                    const angleRad = (angle * Math.PI) / 180
+                    
+                     // 2. Thiết lập bán kính cho nhãn (Label Radius)
+                    // Đặt nhãn nằm phía trong hàng ghế đầu tiên (innerRadius) một khoảng đệm
+                    //const labelRadius = Math.max(arcLayout.innerRadius - detailSeatPx * 1.8, detailSeatPx + 16)
+                    const labelRadius = arcLayout.innerRadius - (detailSeatPx * 1.2)
+                    // 3. Tính toán tọa độ x, y
+                    // lx: Độ lệch ngang so với tâm (50%)
+                    // ly: Độ lệch dọc dựa trên bán kính và tâm vòng cung
+                    const lx = Math.sin(angleRad) * labelRadius
+                    const ly = -Math.cos(angleRad) * labelRadius + arcLayout.maxRadius 
+                      //- detailSeatPx * 1.2
 
                     return (
                       <div 
                         key={`col-label-${i}`}
-                        className="absolute left-1/2 top-[10%] text-[11px] font-black text-slate-500 uppercase flex items-center justify-center w-6 h-6"
+                        className="absolute left-1/2 top-0 text-[11px] font-black text-slate-500 uppercase flex items-center justify-center w-8 h-8 pointer-events-none"
                         style={{
-                          transform: `translate(${lx - 12}px, ${ly}px) rotate(${angle}deg)`
+                          //transform: `translate(${lx - 16}px, ${ly - 16}px)`
+                          transform: `translate(calc(-50% + ${lx}px), ${ly}px) rotate(${angle}deg)`,
+                          transformOrigin: "center center",
                         }}
                       >
                         {String.fromCharCode(65 + i)}
@@ -261,31 +514,22 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
                   {Array.from({ length: rows }).map((_, r) => (
                     <React.Fragment key={r}>
                       {Array.from({ length: cols }).map((_, i) => {
-                        const total = cols
-                        const angleSpread = 120 + r * 10
-                        const angleStep = angleSpread / (total - 1 || 1)
-                        const startAngle = -angleSpread / 2
-                        const angle = startAngle + i * angleStep
-                        const radius = (150 + r * 45) // Increased from 120 + r * 30
-                        const maxRadius = (150 + (rows - 1) * 45)
-                        
-                        const rx = Math.sin((angle * Math.PI) / 180) * radius
-                        const ry = -Math.cos((angle * Math.PI) / 180) * radius + maxRadius
-
+                        const { rx, ry, angle } = getArcSeatTransform(r + 1, i + 1, cols, arcLayout)
                         const seat = getSeatBySectionPos(sec, r + 1, i + 1)
                         
                         return (
-                          <React.Fragment key={`${r}-${i}`}>
+                          <React.Fragment key={`${sec.id}-${r}-${i}`}>
                             {renderSeat(seat, sec.type, {
+                              detailView: true,
+                              disableHover: sec.shape === "arc",
                               className: "absolute",
                               labelOverride: r + 1,
                               style: {
                                 left: "50%",
-                                top: "10%",
-                                width: '36px',
-                                height: '36px',
+                                width: `${detailSeatPx}px`,
+                                height: `${detailSeatPx}px`,
                                 fontSize: '12px',
-                                transform: `translate(${rx - 18}px, ${ry}px) rotate(${angle}deg)`,
+                                transform: `translate(${rx - halfSeat}px, ${ry}px) rotate(${angle}deg)`,
                               }
                             })}
                           </React.Fragment>
@@ -296,27 +540,9 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
                </div>
             </div>
           )}
+          </div>
         </div>
 
-        {/* Legend in Zoom View */}
-        <div className="mt-auto pt-8 flex items-center justify-center gap-8">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-t-lg border-b-2 border-blue-600 bg-blue-500" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Thường</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-t-lg border-b-2 border-amber-600 bg-amber-400" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">VIP</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-t-lg border-b-2 border-green-400 bg-green-500 ring-4 ring-green-400/50" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đang chọn</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-t-lg border-2 border-red-500" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hết chỗ</span>
-          </div>
-        </div>
       </div>
     )
   }
@@ -324,8 +550,15 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
   const renderLayout = () => {
     if (!parsedLayout || parsedLayout.length === 0) return null
 
+    const hasNoSeats = !seatsLoading && (!seats || seats.length === 0)
+
     return (
       <div className="relative w-full group overflow-hidden rounded-[2rem]">
+        {hasNoSeats && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded-full text-xs font-bold shadow-lg animate-bounce">
+            ⚠️ Không có dữ liệu ghế cho suất này. Chạy backend (port 3000) hoặc bật RLS SELECT cho bảng showtimes.
+          </div>
+        )}
         {zoomedSection && renderZoomedSectionView()}
         
         {/* Zoom Controls */}
@@ -410,16 +643,19 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
                     }}
                   >
                     {/* View Detail Overlay on Hover */}
-                    <div className="absolute inset-0 opacity-0 group-hover/sec:opacity-100 transition-opacity bg-primary/5 flex items-center justify-center z-30 rounded-[inherit]">
-                       <div className="bg-white px-3 py-1.5 rounded-full shadow-lg border border-primary/20 flex items-center gap-2 text-[10px] font-bold text-primary animate-in fade-in slide-in-from-bottom-2">
+                    <div className="absolute inset-0 opacity-0 group-hover/sec:opacity-100 transition-opacity bg-primary/5 flex items-center justify-center z-30 rounded-[inherit] pointer-events-none">
+                       <div className="bg-white px-3 py-1.5 rounded-full shadow-lg border border-primary/20 flex items-center gap-2 text-[10px] font-bold text-primary animate-in fade-in slide-in-from-bottom-2 pointer-events-auto">
                           <Maximize2 className="w-3 h-3" />
                           CHI TIẾT
                        </div>
                     </div>
 
                     {/* Section Label */}
-                    {sec.name && !isDefaultSectionName(sec.name) && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-white border border-slate-200 text-slate-600 text-[10px] font-black rounded-full uppercase tracking-[0.15em] shadow-md z-20 whitespace-nowrap group-hover/sec:bg-primary group-hover/sec:text-white group-hover/sec:border-primary transition-all duration-300">
+                    {sec.name && (
+                      <div
+                        className="absolute -top-6 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-white border border-slate-200 text-slate-600 text-[10px] font-black rounded-full uppercase tracking-[0.15em] shadow-md z-20 whitespace-nowrap group-hover/sec:bg-primary group-hover/sec:text-white group-hover/sec:border-primary transition-all duration-300"
+                        style={{ transform: `translateX(-50%) rotate(${-Number(sec.rotation || 0)}deg)` }}
+                      >
                         {sec.name}
                       </div>
                     )}
@@ -436,7 +672,7 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
                           Array.from({ length: cols }).map((_, c) => {
                             const seat = getSeatBySectionPos(sec, r + 1, c + 1)
                             return (
-                              <div key={`${r}-${c}`} className="flex items-center justify-center">
+                              <div key={`${sec.id}-${r}-${c}`} className="flex items-center justify-center">
                                 {renderSeat(seat, sec.type, { showLabel: false })}
                               </div>
                             )
@@ -466,7 +702,7 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
                                 const seat = getSeatBySectionPos(sec, r + 1, i + 1)
                                 
                                 return (
-                                  <React.Fragment key={`${r}-${i}`}>
+                                  <React.Fragment key={`${sec.id}-${r}-${i}`}>
                                     {renderSeat(seat, sec.type, {
                                       showLabel: false,
                                       className: "absolute",
@@ -503,6 +739,17 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
           }
           .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: rgba(179,0,4,0.3);
+          }
+          .zoom-detail-scroll {
+            overflow-anchor: none;
+          }
+          .zoom-detail-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+          }
+          .zoom-detail-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.12);
+            border-radius: 10px;
           }
         `}} />
       </div>
@@ -575,23 +822,26 @@ export function SeatMap({ seats = [], selectedSeats = [], onSeatClick, maxSeats 
         </>
       )}
 
-      {/* Legend */}
       <div className="mt-8 flex flex-wrap items-center justify-center gap-6 px-4">
         <div className="flex items-center gap-3 bg-card p-2 px-4 rounded-xl border border-border shadow-sm">
-          <div className="h-6 w-6 rounded-t-md border-b-2 border-blue-600 bg-blue-500 shadow-sm" />
-          <span className="text-sm font-medium">Thường</span>
+          <div className="h-6 w-6 rounded-t-md border-b-2 border-amber-600 bg-amber-400 shadow-sm" />
+          <span className="text-sm font-medium">Ghế hạng VIP</span>
         </div>
         <div className="flex items-center gap-3 bg-card p-2 px-4 rounded-xl border border-border shadow-sm">
-          <div className="h-6 w-6 rounded-t-md border-b-2 border-amber-600 bg-amber-400 shadow-sm" />
-          <span className="text-sm font-medium">VIP</span>
+          <div className="h-6 w-6 rounded-t-md border-b-2 border-blue-600 bg-blue-500 shadow-sm" />
+          <span className="text-sm font-medium">Ghế hạng Standard</span>
         </div>
         <div className="flex items-center gap-3 bg-card p-2 px-4 rounded-xl border border-border shadow-sm">
           <div className="h-6 w-6 rounded-t-md border-b-2 border-green-400 bg-green-500 ring-4 ring-green-400/50 shadow-[0_0_20px_rgba(34,197,94,0.6)]" />
-          <span className="text-sm font-medium">Đang chọn</span>
+          <span className="text-sm font-medium">Đang chọn / giữ</span>
         </div>
         <div className="flex items-center gap-3 bg-card p-2 px-4 rounded-xl border border-border shadow-sm">
           <div className="h-6 w-6 rounded-t-md border-2 border-red-500 bg-transparent" />
-          <span className="text-sm font-medium text-muted-foreground">Hết chỗ</span>
+          <span className="text-sm font-medium text-muted-foreground">Locked (người dùng khác đang giữ ghế)</span>
+        </div>
+        <div className="flex items-center gap-3 bg-card p-2 px-4 rounded-xl border border-border shadow-sm">
+          <div className="h-6 w-6 rounded-t-md border border-slate-300 bg-slate-100 opacity-60" />
+          <span className="text-sm font-medium text-muted-foreground">Ghế trống</span>
         </div>
       </div>
 
