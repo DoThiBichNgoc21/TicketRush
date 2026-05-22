@@ -49,69 +49,41 @@ export function EventCard({ event }) {
 
         {/* Overlay on Hover */}
         <div
-          className={`absolute inset-0 bg-background/80 flex flex-col items-center justify-center gap-3 transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"
+          className={`absolute inset-0 bg-background/60 backdrop-blur-[2px] flex flex-col items-center justify-center transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"
             }`}
         >
           <Button
-            size="sm"
-            className="w-10/12 max-w-[140px] text-xs sm:text-sm bg-red-600 hover:bg-red-700 text-white gap-2"
+            size="lg"
+            className="px-8 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full shadow-2xl hover:scale-105 transition-all"
             disabled={event.soldOut}
-          >
-            {event.soldOut ? "Hết vé" : "Mua vé ngay"}
-          </Button>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            className="w-10/12 max-w-[140px] text-xs sm:text-sm border-foreground/30 text-foreground hover:bg-foreground/10"
             onClick={handleDetailClick}
           >
-            Xem chi tiết
+            {event.soldOut ? "HẾT VÉ" : "MUA VÉ NGAY"}
           </Button>
         </div>
       </div>
 
       {/* Event Info */}
-      <div className="p-4">
-        <h3 className="font-semibold text-foreground mb-2 line-clamp-2 min-h-[48px]">
+      <div className="p-4 flex flex-col flex-1">
+        <h3 className="font-bold text-foreground mb-3 text-lg line-clamp-2 min-h-[56px] leading-snug group-hover:text-primary transition-colors cursor-pointer" onClick={handleDetailClick}>
           {event.title}
         </h3>
 
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="space-y-2.5 mb-2">
+          <div className="flex items-center gap-2.5 text-sm text-muted-foreground font-medium">
             <Calendar className="w-4 h-4 text-primary shrink-0" />
             <span>{event.date}</span>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2.5 text-sm text-muted-foreground font-medium">
             <Clock className="w-4 h-4 text-primary shrink-0" />
             <span>{event.time}</span>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2.5 text-sm text-muted-foreground font-medium">
             <MapPin className="w-4 h-4 text-primary shrink-0" />
             <span className="line-clamp-1">{event.location}</span>
           </div>
-
-          {event.attendees && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="w-4 h-4 text-primary shrink-0" />
-              <span>{event.attendees}</span>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between pt-3 border-t border-border">
-          <div>
-            <p className="text-xs text-muted-foreground">Giá từ</p>
-            <p className="font-bold text-primary">{event.price}</p>
-          </div>
-          <Button
-            size="sm"
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold"
-            disabled={event.soldOut}
-          >
-            {event.soldOut ? "HẾT VÉ" : "MUA VÉ"}
-          </Button>
         </div>
       </div>
     </div>

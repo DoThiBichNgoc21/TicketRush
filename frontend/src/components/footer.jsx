@@ -26,10 +26,10 @@ const footerLinks = {
 export function Footer() {
   const [contactData, setContactData] = useState({
     hotline: "1900 1234 56",
-    support_email: "support@ticketrush.vn",
-    office_address: "Tầng 10, Tòa nhà ABC, Quận Cầu Giấy, Hà Nội",
-    facebook_page: "#",
-    instagram_page: "#",
+    support_email: "admin@ticketrush.vn",
+    office_address: "Tòa nhà ABC, Cầu Giấy, Hà Nội",
+    facebook_page: "https://facebook.com/ticketrush",
+    instagram_page: "https://instagram.com/ticketrush",
     zalo_oa_id: "#",
   });
 
@@ -38,15 +38,18 @@ export function Footer() {
       try {
         const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
         const response = await fetch(`${API_BASE_URL}/api/admin/support/articles/contact`);
+        if (!response.ok) return;
+        
         const result = await response.json();
-        if (response.ok && result.data && result.data.id) {
+        if (result.success && result.data) {
+          const d = result.data;
           setContactData({
-            hotline: result.data.hotline || contactData.hotline,
-            support_email: result.data.support_email || contactData.support_email,
-            office_address: result.data.office_address || contactData.office_address,
-            facebook_page: result.data.facebook_page || "#",
-            instagram_page: result.data.instagram_page || "#",
-            zalo_oa_id: result.data.zalo_oa_id || "#",
+            hotline: d.hotline || "1900 1234 56",
+            support_email: d.support_email || "admin@ticketrush.vn",
+            office_address: d.office_address || "Tòa nhà ABC, Cầu Giấy, Hà Nội",
+            facebook_page: d.facebook_page || "https://facebook.com/ticketrush",
+            instagram_page: d.instagram_page || "https://instagram.com/ticketrush",
+            zalo_oa_id: d.zalo_oa_id || "#",
           });
         }
       } catch (error) {
@@ -79,16 +82,28 @@ export function Footer() {
             </p>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4 text-primary" />
+                <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
                 <span>{contactData.office_address}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Phone className="w-4 h-4 text-primary" />
+                <Phone className="w-4 h-4 text-primary flex-shrink-0" />
                 <span>Hotline: {contactData.hotline}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="w-4 h-4 text-primary" />
+                <Mail className="w-4 h-4 text-primary flex-shrink-0" />
                 <span>{contactData.support_email}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Share2 className="w-4 h-4 text-primary flex-shrink-0" />
+                <a href={contactData.facebook_page} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">Facebook: TicketRush</a>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Camera className="w-4 h-4 text-primary flex-shrink-0" />
+                <a href={contactData.instagram_page} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">Instagram: @ticketrush</a>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Video className="w-4 h-4 text-primary flex-shrink-0" />
+                <span>Zalo OA: {contactData.zalo_oa_id || "Đang cập nhật"}</span>
               </div>
             </div>
 

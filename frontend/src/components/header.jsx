@@ -16,10 +16,9 @@ import {
 
 const navLinks = [
   { label: "SỰ KIỆN", href: "/su-kien" },
-  { label: "LỊCH DIỄN", href: "/lich-dien" },
   { label: "ĐỊA ĐIỂM", href: "/dia-diem" },
+  { label: "VÉ CỦA TÔI", href: "/my-tickets" },
   { label: "HƯỚNG DẪN", href: "/huong-dan" },
-  { label: "TIN TỨC", href: "/tin-tuc" },
 ]
 
 export function Header() {
@@ -29,7 +28,7 @@ export function Header() {
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
-  
+
   const debouncedSearch = useDebounce(searchQuery, 300)
   const navigate = useNavigate()
 
@@ -121,7 +120,7 @@ export function Header() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
-                  className="w-full bg-slate-100 border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  className="w-full bg-slate-100 border-none rounded-full py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 />
               </div>
 
@@ -157,7 +156,7 @@ export function Header() {
                             </div>
                           </button>
                         ))}
-                        <button 
+                        <button
                           onClick={handleSearchSubmit}
                           className="w-full p-2 mt-2 text-center text-xs font-bold text-primary hover:bg-primary/5 rounded-lg border-t border-border"
                         >
@@ -180,7 +179,7 @@ export function Header() {
               <Link
                 key={link.href}
                 to={link.href}
-                className="flex h-full items-center text-sm font-semibold text-foreground border-b-2 border-transparent hover:border-red-600 hover:text-red-600 transition-colors"
+                className="flex h-full items-center text-sm font-medium text-foreground border-b-2 border-transparent hover:border-red-600 hover:text-red-600 transition-colors"
               >
                 {link.label}
               </Link>
@@ -212,9 +211,6 @@ export function Header() {
                 <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
                   <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary" onClick={() => navigate('/profile')}>
                     Tài khoản
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary" onClick={() => navigate('/my-tickets')}>
-                    Vé của tôi
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary text-red-600" onClick={handleLogout}>
@@ -309,7 +305,7 @@ export function Header() {
                       Đăng ký
                     </Button>
                   </div>
-                  
+
                   {/* NÚT VÀO ADMIN - GIỮ LẠI TỪ NHÁNH ADMIN */}
                   <div className="px-4 py-2 border-t border-border mt-2">
                     <Link

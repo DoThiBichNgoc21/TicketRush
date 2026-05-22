@@ -278,40 +278,32 @@ export const confirmBooking = async (req, res) => {
 
     const userId = req.user.id
 
-    const { event_id, showtime_id, seat_ids, total_amount, p_discount_id, p_discount_amount } = req.body
-
-
+    const { 
+      event_id, 
+      showtime_id, 
+      seat_ids, 
+      total_amount, 
+      p_discount_id, 
+      p_discount_amount,
+      payment_method = 'Credit Card' 
+    } = req.body
 
     if (!event_id || !showtime_id || !Array.isArray(seat_ids) || seat_ids.length === 0) {
-
       return res.status(400).json({
-
         success: false,
-
         message: "Thiếu event_id, showtime_id hoặc danh sách ghế",
-
       })
-
     }
 
-
-
     const { data, error } = await supabase.rpc("confirm_booking", {
-
       p_user_id: toBigIntId(userId, "user_id"),
-
       p_event_id: toBigIntId(event_id, "event_id"),
-
       p_showtime_id: toBigIntId(showtime_id, "showtime_id"),
-
       p_seat_ids: seat_ids.map((id) => toBigIntId(id, "seat_id")),
-
       p_total_amount: total_amount,
-
       p_discount_id: p_discount_id ? toBigIntId(p_discount_id, "discount_id") : null,
-
       p_discount_amount: p_discount_amount || 0,
-
+      p_payment_method: payment_method
     })
 
 
