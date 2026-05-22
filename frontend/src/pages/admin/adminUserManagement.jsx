@@ -478,12 +478,13 @@ function CustomersPage() {
           </button>
 
           <button
-            onClick={() => navigate("/admin/discount")}
+            onClick={() => navigate("/admin/instruction")}
             className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
           >
-            <span className="material-symbols-outlined">confirmation_number</span>
-            <span>Mã giảm giá</span>
-            </button>
+            <span className="material-symbols-outlined">analytics</span>
+            <span>Hỗ trợ & Liên hệ</span>
+          </button>
+        </nav>
 
           <button
             onClick={() => navigate("/admin/instruction")}

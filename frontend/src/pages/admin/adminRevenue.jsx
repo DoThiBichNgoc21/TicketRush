@@ -128,6 +128,10 @@ const RevenueDashboard = () => {
           </button>
         </nav>
         <div className="px-6 pt-6 border-t border-gray-200 dark:border-gray-800 space-y-1">
+          <a className="flex items-center py-2 space-x-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-all font-sans font-medium text-sm" href="#">
+            <span className="material-symbols-outlined" data-icon="help">help</span>
+            <span>Hỗ trợ</span>
+          </a>
           <button
             onClick={() => navigate("/")}
             className="flex items-center w-full py-2 space-x-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-all font-sans font-medium text-sm text-left"
