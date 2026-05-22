@@ -16,10 +16,9 @@ import {
 
 const navLinks = [
   { label: "SỰ KIỆN", href: "/su-kien" },
-  { label: "LỊCH DIỄN", href: "/lich-dien" },
   { label: "ĐỊA ĐIỂM", href: "/dia-diem" },
+  { label: "VÉ CỦA TÔI", href: "/my-tickets" },
   { label: "HƯỚNG DẪN", href: "/huong-dan" },
-  { label: "TIN TỨC", href: "/tin-tuc" },
 ]
 
 export function Header() {
@@ -212,9 +211,6 @@ export function Header() {
                 <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
                   <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary" onClick={() => navigate('/profile')}>
                     Tài khoản
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary" onClick={() => navigate('/my-tickets')}>
-                    Vé của tôi
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="cursor-pointer font-medium hover:bg-secondary text-red-600" onClick={handleLogout}>
