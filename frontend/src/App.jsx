@@ -24,6 +24,8 @@ import CreateEventStep3 from './pages/admin/adminEvents_3';
 import UserManagement from "./pages/admin/adminUserManagement";
 import AdminRevenue from "./pages/admin/adminRevenue";
 import AdminInstruction from "./pages/admin/adminInstruction";
+import AdminDiscount from "./pages/admin/adminDiscount";
+import AdminCreateDiscount from "./pages/admin/adminDiscountCreate";
 
 // --- IMPORT CSS ---
 import './index.css';
@@ -56,6 +58,8 @@ function App() {
         <Route path="/admin/usermanagement" element={<UserManagement />} />
         <Route path="/admin/revenue" element={<AdminRevenue />} />
         <Route path="/admin/instruction" element={<AdminInstruction />} />
+        <Route path="/admin/discount" element={<AdminDiscount />} />
+        <Route path="/api/discount/create" element={<AdminCreateDiscount />} />
       </Routes>
 
       {/* Hiển thị thông báo Toast cho toàn hệ thống */}
