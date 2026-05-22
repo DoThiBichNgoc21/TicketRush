@@ -75,7 +75,9 @@ export function HeroBanner() {
       {banners.map((banner, index) => (
         <div
           key={banner.id}
-          className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100" : "opacity-0"
+          className={`absolute inset-0 transition-all duration-700 ${index === currentSlide
+            ? "opacity-100 z-10 pointer-events-auto"
+            : "opacity-0 z-0 pointer-events-none"
             }`}
         >
           {/* Event image (if present) */}
@@ -130,7 +132,7 @@ export function HeroBanner() {
                 </div> */}
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-4">
                 <Button
                   size="lg"
                   className="bg-red-600 hover:bg-red-700 text-white shadow-lg px-12 h-14 text-lg font-black rounded-xl transform hover:scale-105 transition-all"
@@ -138,6 +140,14 @@ export function HeroBanner() {
                   disabled={!banner.eventId}
                 >
                   Mua vé ngay
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/40 backdrop-blur-md px-8 h-14 text-lg font-bold rounded-xl transform hover:scale-105 transition-all"
+                  onClick={() => navigate("/su-kien")}
+                >
+                  Xem tất cả sự kiện
                 </Button>
               </div>
             </div>
@@ -151,7 +161,7 @@ export function HeroBanner() {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-background/20 hover:bg-background/40 text-foreground"
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/20 hover:bg-black/40 text-white z-50 transition-all"
             onClick={prevSlide}
           >
             <ChevronLeft className="w-6 h-6" />
@@ -159,7 +169,7 @@ export function HeroBanner() {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-background/20 hover:bg-background/40 text-foreground"
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/20 hover:bg-black/40 text-white z-50 transition-all"
             onClick={nextSlide}
           >
             <ChevronRight className="w-6 h-6" />
@@ -169,7 +179,7 @@ export function HeroBanner() {
 
       {/* Dots Indicator */}
       {banners && banners.length > 0 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-50">
           {banners.map((_, index) => (
             <button
               key={index}

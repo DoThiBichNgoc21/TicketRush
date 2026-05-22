@@ -60,13 +60,13 @@ const promos = [
 
 export function PromoSection() {
   return (
-    <section className="py-16 bg-secondary/50">
+    <section className="py-10 bg-secondary/50">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-black text-foreground mb-3">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl md:text-3xl font-black text-foreground mb-2">
             Tại sao chọn TicketRush?
           </h2>
-          <p className="text-muted-foreground text-lg italic">
+          <p className="text-muted-foreground text-base italic">
             Nền tảng đặt vé điện tử hàng đầu Việt Nam
           </p>
         </div>
@@ -77,7 +77,7 @@ export function PromoSection() {
             return (
               <div
                 key={feature.id}
-                className="group text-center p-8 bg-card border border-border rounded-3xl hover:shadow-2xl hover:border-primary/20 transition-all duration-300 transform hover:-translate-y-2"
+                className="group text-center p-6 bg-card border border-border rounded-3xl hover:shadow-2xl hover:border-primary/20 transition-all duration-300 transform hover:-translate-y-2"
               >
                 <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.color} mb-6 group-hover:rotate-6 transition-transform`}>
                   <Icon className="w-8 h-8 text-white" />

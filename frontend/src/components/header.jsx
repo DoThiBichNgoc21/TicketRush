@@ -120,7 +120,7 @@ export function Header() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
-                  className="w-full bg-slate-100 border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                  className="w-full bg-slate-100 border-none rounded-full py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 />
               </div>
 
@@ -179,7 +179,7 @@ export function Header() {
               <Link
                 key={link.href}
                 to={link.href}
-                className="flex h-full items-center text-sm font-semibold text-foreground border-b-2 border-transparent hover:border-red-600 hover:text-red-600 transition-colors"
+                className="flex h-full items-center text-sm font-medium text-foreground border-b-2 border-transparent hover:border-red-600 hover:text-red-600 transition-colors"
               >
                 {link.label}
               </Link>
