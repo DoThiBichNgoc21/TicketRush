@@ -278,7 +278,7 @@ export const confirmBooking = async (req, res) => {
 
     const userId = req.user.id
 
-    const { event_id, showtime_id, seat_ids, total_amount } = req.body
+    const { event_id, showtime_id, seat_ids, total_amount, p_discount_id, p_discount_amount } = req.body
 
 
 
@@ -307,6 +307,10 @@ export const confirmBooking = async (req, res) => {
       p_seat_ids: seat_ids.map((id) => toBigIntId(id, "seat_id")),
 
       p_total_amount: total_amount,
+
+      p_discount_id: p_discount_id ? toBigIntId(p_discount_id, "discount_id") : null,
+
+      p_discount_amount: p_discount_amount || 0,
 
     })
 
