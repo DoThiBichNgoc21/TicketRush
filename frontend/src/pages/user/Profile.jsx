@@ -2,12 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Header } from '../../components/header'
 import { Footer } from '../../components/footer'
-import { supabase } from '../../lib/supabaseClient'
 import { User, Mail, Phone, MapPin, Save, Camera, ShieldCheck, Calendar, X as CloseIcon, Ticket, Star } from 'lucide-react'
 import { Button } from '../../components/ui/button'
 import { toast } from 'sonner'
 import Cropper from 'react-easy-crop'
 import { getCroppedImg } from '../../lib/imageUtils'
+import { supabase } from '../../lib/supabaseClient'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const ProfilePage = () => {
   const navigate = useNavigate()
@@ -34,6 +36,8 @@ const ProfilePage = () => {
     last_name: '',
     phone_number: '',
     avatar_url: '',
+    gender: '',
+    birth_year: '',
   })
 
   useEffect(() => {
@@ -48,19 +52,14 @@ const ProfilePage = () => {
       const storedUser = JSON.parse(userRaw)
       
       try {
-        console.log('Fetching profile for user ID:', storedUser.id)
-        const { data, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', storedUser.id)
-          .single()
+        const response = await fetch(`${API_BASE_URL}/api/usermanagement/${storedUser.id}`)
+        const result = await response.json()
 
-        if (error) {
-          console.error('Supabase error fetching profile:', error)
-          throw error
+        if (!response.ok) {
+          throw new Error(result.message || 'Không thể tải thông tin người dùng')
         }
-        
-        console.log('Profile data received:', data)
+
+        const data = result.data
 
         if (!data) {
           toast.error('Không tìm thấy thông tin người dùng trong hệ thống')
@@ -68,14 +67,32 @@ const ProfilePage = () => {
           return
         }
 
-        setUser(data)
+        // normalizeUser ở backend trả về camelCase, map lại cho form
+        const rawUser = {
+          id: storedUser.id,
+          username: data.username,
+          email: data.email,
+          first_name: data.firstName || '',
+          last_name: data.lastName || '',
+          phone_number: data.phoneNumber || '',
+          avatar_url: data.avatar || '',
+          gender: data.gender || '',
+          birth_year: data.birthYear || '',
+          role: data.role,
+          status: data.statusRaw,
+          created_at: data.createdAt,
+        }
+
+        setUser(rawUser)
         setFormData({
-          username: data.username || '',
-          email: data.email || '',
-          first_name: data.first_name || '',
-          last_name: data.last_name || '',
-          phone_number: data.phone_number || '',
-          avatar_url: data.avatar_url || '',
+          username: rawUser.username || '',
+          email: rawUser.email || '',
+          first_name: rawUser.first_name || '',
+          last_name: rawUser.last_name || '',
+          phone_number: rawUser.phone_number || '',
+          avatar_url: rawUser.avatar_url || '',
+          gender: rawUser.gender || '',
+          birth_year: rawUser.birth_year || '',
         })
       } catch (error) {
         console.error('Error in fetchUserData:', error)
@@ -160,26 +177,35 @@ const ProfilePage = () => {
         currentAvatarUrl = publicUrl
       }
 
-      // 2. Cập nhật thông tin người dùng
-      const { data, error } = await supabase
-        .from('users')
-        .update({
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          phone_number: formData.phone_number,
+      // 2. Cập nhật thông tin người dùng qua backend API
+      const updateResponse = await fetch(`${API_BASE_URL}/api/usermanagement/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: formData.first_name,
+          lastName: formData.last_name,
+          phoneNumber: formData.phone_number,
           avatar_url: currentAvatarUrl,
-          updated_at: new Date().toISOString()
         })
-        .eq('id', user.id)
-        .select()
-        .single()
+      })
 
-      if (error) throw error
+      const updateResult = await updateResponse.json()
+      if (!updateResponse.ok) throw new Error(updateResult.message || 'Không thể cập nhật hồ sơ')
 
-      // Cập nhật local storage và state
-      localStorage.setItem('user_info', JSON.stringify(data))
-      setUser(data)
-      setFormData(prev => ({ ...prev, avatar_url: data.avatar_url }))
+      const updated = updateResult.data
+
+      // Map camelCase từ backend về snake_case cho state
+      const updatedUser = {
+        ...user,
+        first_name: updated.firstName || '',
+        last_name: updated.lastName || '',
+        phone_number: updated.phoneNumber || '',
+        avatar_url: currentAvatarUrl,
+      }
+
+      localStorage.setItem('user_info', JSON.stringify(updatedUser))
+      setUser(updatedUser)
+      setFormData(prev => ({ ...prev, avatar_url: currentAvatarUrl }))
       
       // Dọn dẹp state tạm thời
       if (avatarPreviewUrl) {
@@ -398,6 +424,32 @@ const ProfilePage = () => {
                     <input
                       type="text"
                       value={new Date(user.created_at).toLocaleDateString('vi-VN')}
+                      disabled
+                      className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-muted-foreground cursor-not-allowed"
+                    />
+                  </div>
+
+                  {/* Giới tính (Read-only) */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-muted-foreground flex items-center gap-2">
+                      Giới tính
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.gender || 'Chưa cập nhật'}
+                      disabled
+                      className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-muted-foreground cursor-not-allowed"
+                    />
+                  </div>
+
+                  {/* Năm sinh (Read-only) */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-muted-foreground flex items-center gap-2">
+                      Năm sinh
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.birth_year ? `${formData.birth_year} (${new Date().getFullYear() - Number(formData.birth_year)} tuổi)` : 'Chưa cập nhật'}
                       disabled
                       className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-muted-foreground cursor-not-allowed"
                     />

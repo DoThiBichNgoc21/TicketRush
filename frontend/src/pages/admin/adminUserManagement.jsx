@@ -5,7 +5,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
 
 const uiThemeStyles = `
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap");
 
 .material-symbols-outlined {
@@ -470,26 +470,31 @@ function CustomersPage() {
           </button>
 
           <button
-            className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
-          >
-            <span className="material-symbols-outlined">confirmation_number</span>
-            <span>Vé</span>
-          </button>
-
-          <button
+            onClick={() => navigate("/admin/revenue")}
             className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
           >
             <span className="material-symbols-outlined">analytics</span>
-            <span>Báo cáo</span>
+            <span>Doanh thu</span>
+          </button>
+
+          <button
+            onClick={() => navigate("/admin/discount")}
+            className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
+          >
+            <span className="material-symbols-outlined">confirmation_number</span>
+            <span>Mã giảm giá</span>
+            </button>
+
+          <button
+            onClick={() => navigate("/admin/instruction")}
+            className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
+          >
+            <span className="material-symbols-outlined">help</span>
+            <span>Hỗ trợ & Liên hệ</span>
           </button>
         </nav>
 
         <div className="px-6 pt-6 border-t border-gray-200 space-y-1">
-          <button className="flex items-center w-full py-2 space-x-3 text-gray-600 hover:text-gray-900 transition-all font-sans font-medium text-sm text-left">
-            <span className="material-symbols-outlined">help</span>
-            <span>Hỗ trợ</span>
-          </button>
-
           <button
             onClick={() => navigate("/")}
             className="flex items-center w-full py-2 space-x-3 text-gray-600 hover:text-gray-900 transition-all font-sans font-medium text-sm text-left"
@@ -518,13 +523,6 @@ function CustomersPage() {
                 >
                   search
                 </span>
-                <input
-                  className="pl-10 pr-4 py-2 bg-surface-container border border-outline-variant rounded-full text-label-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
-                  placeholder="Tìm kiếm người dùng..."
-                  type="text"
-                  value={keyword}
-                  onChange={(event) => handleSearchChange(event.target.value)}
-                />
               </div>
 
               <div className="flex items-center gap-4">
@@ -716,6 +714,13 @@ function CustomersPage() {
               <h3 className="text-h1 font-h1">Danh sách người dùng</h3>
 
               <div className="flex flex-wrap items-center gap-3">
+                <input
+                  className="pl-10 pr-4 py-2 bg-surface-container border border-outline-variant rounded-full text-label-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
+                  placeholder="Tìm kiếm người dùng..."
+                  type="text"
+                  value={keyword}
+                  onChange={(event) => handleSearchChange(event.target.value)}
+                />
                 <select
                   className="bg-surface-container border border-outline-variant rounded-lg px-4 py-2 text-label-sm focus:ring-2 focus:ring-primary/20"
                   value={gender}

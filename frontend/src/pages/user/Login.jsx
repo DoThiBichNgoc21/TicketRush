@@ -1,32 +1,56 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import axiosInstance from '../../lib/axiosInstance.js';
 
 export default function UserLogin() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [requiresVerification, setRequiresVerification] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setError('');
+    setRequiresVerification(false);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+    setRequiresVerification(false);
+    
     try {
       const res = await axiosInstance.post('/auth/user/login', form);
       localStorage.setItem('user_token', res.data.token);
       localStorage.setItem('user_info', JSON.stringify(res.data.user));
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Đăng nhập thất bại');
+      if (err.response?.status === 403 && err.response?.data?.requiresEmailVerification) {
+        setRequiresVerification(true);
+        setError('');
+      } else {
+        setError(err.response?.data?.message || 'Đăng nhập thất bại');
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!form.email) return;
+    setResendLoading(true);
+    try {
+      await axiosInstance.post('/auth/resend-verification-email', { email: form.email });
+      alert('Email xác thực đã được gửi lại. Vui lòng kiểm tra email của bạn.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Không thể gửi lại email');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -60,6 +84,26 @@ export default function UserLogin() {
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">
               {error}
+            </div>
+          )}
+
+          {requiresVerification && (
+            <div className="mb-4 p-3 rounded-lg bg-blue-50 text-blue-700 text-sm border border-blue-100">
+              <div className="flex gap-2 mb-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Email chưa được xác thực</p>
+                  <p className="text-xs mt-1">Vui lòng xác thực email của bạn để tiếp tục. Email xác thực đã được gửi tới inbox của bạn.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resendLoading || !form.email}
+                className="text-xs font-semibold underline hover:no-underline disabled:opacity-60 mt-2"
+              >
+                {resendLoading ? 'Đang gửi...' : 'Gửi lại mã xác thực'}
+              </button>
             </div>
           )}
 

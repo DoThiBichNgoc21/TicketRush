@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User as UserIcon, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import axiosInstance from '../../lib/axiosInstance.js';
 
 export default function UserRegister() {
@@ -11,10 +11,13 @@ export default function UserRegister() {
     confirmPassword: '',
     first_name: '',
     last_name: '',
-    phone_number: ''
+    phone_number: '',
+    gender: '',
+    birth_year: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
@@ -22,6 +25,7 @@ export default function UserRegister() {
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setError('');
+    setEmailError('');
   };
 
   const handleSubmit = async (e) => {
@@ -38,13 +42,44 @@ export default function UserRegister() {
     }
 
     setLoading(true);
+    setError('');
+    setEmailError('');
+    
     try {
       const payload = { ...form };
       delete payload.confirmPassword;
-      await axiosInstance.post('/auth/user/register', payload);
-      navigate('/login');
+      const res = await axiosInstance.post('/auth/user/register', payload);
+      
+      // Lưu email vào sessionStorage để CheckYourEmailPage có thể lấy
+      sessionStorage.setItem('pendingVerificationEmail', form.email);
+      
+      // Nếu email gửi bị lỗi, hiển thị warning nhưng vẫn đi tới check email page
+      if (!res.data?.emailSent) {
+        setEmailError('Email xác thực không thể gửi được. Vui lòng gửi lại hoặc kiểm tra Email Spam.');
+      }
+      
+      // Navigate tới check email page
+      navigate('/check-your-email', { 
+        state: { 
+          email: form.email,
+          emailError: res.data?.emailError
+        } 
+      });
     } catch (err) {
       setError(err.response?.data?.message || 'Đăng ký thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    try {
+      setLoading(true);
+      await axiosInstance.post('/auth/resend-verification-email', { email: form.email });
+      setEmailError('');
+      alert('Email xác thực đã được gửi lại. Vui lòng kiểm tra email của bạn.');
+    } catch (err) {
+      setEmailError(err.response?.data?.message || 'Không thể gửi lại email');
     } finally {
       setLoading(false);
     }
@@ -80,6 +115,23 @@ export default function UserRegister() {
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100">
               {error}
+            </div>
+          )}
+
+          {emailError && (
+            <div className="mb-4 p-3 rounded-lg bg-orange-50 text-orange-700 text-sm border border-orange-100 flex gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold mb-2">{emailError}</p>
+                <button
+                  type="button"
+                  onClick={handleResendEmail}
+                  disabled={loading}
+                  className="text-xs font-semibold underline hover:no-underline disabled:opacity-60"
+                >
+                  Gửi lại mã xác thực
+                </button>
+              </div>
             </div>
           )}
 
@@ -155,6 +207,39 @@ export default function UserRegister() {
                 className="w-full px-3 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
                 placeholder="0901234567"
               />
+            </div>
+
+            {/* Gender + Birth Year */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Giới tính</label>
+                <select
+                  name="gender"
+                  required
+                  value={form.gender}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
+                >
+                  <option value="">Chọn giới tính</option>
+                  <option value="Nam">Nam</option>
+                  <option value="Nữ">Nữ</option>
+                  <option value="Khác">Khác</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Năm sinh</label>
+                <input
+                  type="number"
+                  name="birth_year"
+                  required
+                  min="1900"
+                  max={new Date().getFullYear()}
+                  value={form.birth_year}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2.5 rounded-md border border-gray-200 bg-gray-50 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 transition"
+                  placeholder="2000"
+                />
+              </div>
             </div>
 
             {/* Password */}
