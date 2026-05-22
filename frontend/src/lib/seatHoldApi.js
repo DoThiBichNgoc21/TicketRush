@@ -74,7 +74,7 @@ export async function releaseSeats(seatIds) {
 
 
 
-export async function confirmBooking({ eventId, showtimeId, seatIds, totalAmount, discountId, discountAmount }) {
+export async function confirmBooking({ eventId, showtimeId, seatIds, totalAmount, discountId, discountAmount, paymentMethod }) {
   const { data } = await bookingAxios.post('/booking/confirm', {
     event_id: eventId,
     showtime_id: showtimeId,
@@ -82,6 +82,7 @@ export async function confirmBooking({ eventId, showtimeId, seatIds, totalAmount
     total_amount: totalAmount,
     p_discount_id: discountId,
     p_discount_amount: discountAmount,
+    payment_method: paymentMethod || 'Credit Card'
   })
   return data
 }

@@ -170,6 +170,7 @@ export default function CheckoutPage() {
         totalAmount,
         discountId: discountData?.id,
         discountAmount: discountData?.discount_amount,
+        paymentMethod: 'Thẻ nội địa'
       })
 
       if (!result?.success) {
