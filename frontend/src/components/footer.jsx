@@ -10,7 +10,7 @@ const footerLinks = {
     { label: "Blog", href: "/blog" },
   ],
   "Dành cho người mua": [
-    { label: "Hướng dẫn đặt vé", href: "/huong-dan-dat-ve" },
+    { label: "Hướng dẫn đặt vé", href: "/huong-dan/huong-dan-mua-ve" },
     { label: "Phương thức thanh toán", href: "/thanh-toan" },
     { label: "Chính sách hoàn vé", href: "/chinh-sach-hoan-ve" },
     { label: "FAQ", href: "/faq" },
@@ -37,7 +37,7 @@ export function Footer() {
     const fetchContactData = async () => {
       try {
         const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-        const response = await fetch(`${API_BASE_URL}/api/admin/support/articles/contact`);
+        const response = await fetch(`${API_BASE_URL}/api/support/contact`);
         const result = await response.json();
         if (response.ok && result.data && result.data.id) {
           setContactData({

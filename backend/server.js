@@ -11,6 +11,7 @@ import adminRevenue from "./src/Routers/adminRevenueRouter.js";
 import adminInstructionRouter from "./src/Routers/adminInstructionRouter.js";
 import bookingRouter from "./src/Routers/bookingRouter.js";
 import ticketRouter from "./src/Routers/ticketRouter.js";
+import supportRouter from "./src/Routers/supportRouter.js";
 import { startSeatReleaseWorker } from "./src/jobs/seatReleaseWorker.js";
 
 dotenv.config();
@@ -31,6 +32,7 @@ app.use("/api/events", eventRoutes);
 app.use("/api/usermanagement", adminUserManagement);
 app.use("/api/revenue", adminRevenue);
 app.use("/api/admin/support/articles", adminInstructionRouter);
+app.use("/api/support", supportRouter);
 app.use("/api/booking", bookingRouter);
 app.use("/api/tickets", ticketRouter);
 
