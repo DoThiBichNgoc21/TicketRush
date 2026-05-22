@@ -28,7 +28,7 @@ export function Header() {
   const [searchResults, setSearchResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
-  
+
   const debouncedSearch = useDebounce(searchQuery, 300)
   const navigate = useNavigate()
 
@@ -156,7 +156,7 @@ export function Header() {
                             </div>
                           </button>
                         ))}
-                        <button 
+                        <button
                           onClick={handleSearchSubmit}
                           className="w-full p-2 mt-2 text-center text-xs font-bold text-primary hover:bg-primary/5 rounded-lg border-t border-border"
                         >
@@ -305,7 +305,7 @@ export function Header() {
                       Đăng ký
                     </Button>
                   </div>
-                  
+
                   {/* NÚT VÀO ADMIN - GIỮ LẠI TỪ NHÁNH ADMIN */}
                   <div className="px-4 py-2 border-t border-border mt-2">
                     <Link

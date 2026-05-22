@@ -95,4 +95,4 @@ export function PromoSection() {
       </div>
     </section>
   )
-}
+}

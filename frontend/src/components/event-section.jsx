@@ -132,9 +132,9 @@ export function EventSection() {
 
         {/* View All Button */}
         <div className="text-center mt-8">
-          <Button 
-            variant="outline" 
-            size="lg" 
+          <Button
+            variant="outline"
+            size="lg"
             className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             onClick={() => navigate('/su-kien')}
           >
