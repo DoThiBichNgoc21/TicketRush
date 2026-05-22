@@ -17,7 +17,7 @@ import SearchPage from './pages/user/SearchPage';
 
 // --- IMPORT CÁC TRANG CỦA ADMIN ---
 // Lưu ý: Kiểm tra lại đường dẫn file của bạn (adminLogin hay Login) cho đúng với thư mục thực tế
-import AdminLogin from './pages/admin/adminLogin'; 
+import AdminLogin from './pages/admin/adminLogin';
 import AdminRegister from './pages/admin/Register';
 import AdminDashboard from './pages/admin/adminDashboard';
 import AdminEvents from "./pages/admin/adminEvents";
@@ -26,6 +26,10 @@ import CreateEventStep1 from './pages/admin/adminEvents_1';
 import CreateEventStep2 from './pages/admin/adminEvents_2';
 import CreateEventStep3 from './pages/admin/adminEvents_3';
 import UserManagement from "./pages/admin/adminUserManagement";
+import AdminRevenue from "./pages/admin/adminRevenue";
+import AdminInstruction from "./pages/admin/adminInstruction";
+import AdminDiscount from "./pages/admin/adminDiscount";
+import AdminCreateDiscount from "./pages/admin/adminDiscountCreate";
 
 // --- IMPORT CSS ---
 import './index.css';
@@ -60,8 +64,12 @@ function App() {
         <Route path="/admin/events/create/step-2" element={<CreateEventStep2 />} />
         <Route path="/admin/events/create/step-3" element={<CreateEventStep3 />} />
         <Route path="/admin/usermanagement" element={<UserManagement />} />
+        <Route path="/admin/revenue" element={<AdminRevenue />} />
+        <Route path="/admin/instruction" element={<AdminInstruction />} />
+        <Route path="/admin/discount" element={<AdminDiscount />} />
+        <Route path="/api/discount/create" element={<AdminCreateDiscount />} />
       </Routes>
-      
+
       {/* Hiển thị thông báo Toast cho toàn hệ thống */}
       <Toaster />
     </>

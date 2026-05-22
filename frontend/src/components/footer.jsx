@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Phone, Mail, Share2, Video, Camera, Ticket, MapPin } from "lucide-react"
 
@@ -23,6 +24,38 @@ const footerLinks = {
 }
 
 export function Footer() {
+  const [contactData, setContactData] = useState({
+    hotline: "1900 1234 56",
+    support_email: "support@ticketrush.vn",
+    office_address: "Tầng 10, Tòa nhà ABC, Quận Cầu Giấy, Hà Nội",
+    facebook_page: "#",
+    instagram_page: "#",
+    zalo_oa_id: "#",
+  });
+
+  useEffect(() => {
+    const fetchContactData = async () => {
+      try {
+        const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+        const response = await fetch(`${API_BASE_URL}/api/admin/support/articles/contact`);
+        const result = await response.json();
+        if (response.ok && result.data && result.data.id) {
+          setContactData({
+            hotline: result.data.hotline || contactData.hotline,
+            support_email: result.data.support_email || contactData.support_email,
+            office_address: result.data.office_address || contactData.office_address,
+            facebook_page: result.data.facebook_page || "#",
+            instagram_page: result.data.instagram_page || "#",
+            zalo_oa_id: result.data.zalo_oa_id || "#",
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch contact data:", error);
+      }
+    };
+    fetchContactData();
+  }, []);
+
   return (
     <footer className="bg-card border-t border-border">
 
@@ -47,36 +80,42 @@ export function Footer() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="w-4 h-4 text-primary" />
-                <span>Tầng 10, Tòa nhà ABC, Quận Cầu Giấy, Hà Nội</span>
+                <span>{contactData.office_address}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Phone className="w-4 h-4 text-primary" />
-                <span>Hotline: 1900 1234 56</span>
+                <span>Hotline: {contactData.hotline}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail className="w-4 h-4 text-primary" />
-                <span>support@ticketrush.vn</span>
+                <span>{contactData.support_email}</span>
               </div>
             </div>
 
             {/* Social Links */}
             <div className="flex gap-3 mt-6">
               <a
-                href="#"
+                href={contactData.facebook_page}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                 aria-label="Facebook"
               >
                 <Share2 className="w-5 h-5" />
               </a>
               <a
-                href="#"
+                href={contactData.zalo_oa_id}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
-                aria-label="Youtube"
+                aria-label="Zalo"
               >
                 <Video className="w-5 h-5" />
               </a>
               <a
-                href="#"
+                href={contactData.instagram_page}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                 aria-label="Instagram"
               >
