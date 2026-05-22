@@ -27,12 +27,14 @@ async function fetchAllSeatsForShowtime(showtimeId) {
 
 export const getEvents = async (req, res) => {
   try {
-    const { search, status, category } = req.query;
+    const { search, status, category, page = 1, limit = 15 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
 
     let query = supabase
       .from("events")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .select("id, name, date, location, category, image_url, status, is_featured, created_at, updated_at, is_visible", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(offset, offset + parseInt(limit) - 1);
 
     if (search) {
       query = query.ilike("name", `%${search}%`);
@@ -58,7 +60,7 @@ export const getEvents = async (req, res) => {
       query = query.eq("category", category);
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
       return res.status(400).json({ message: error.message });
@@ -67,6 +69,10 @@ export const getEvents = async (req, res) => {
     return res.status(200).json({
       message: "Lấy danh sách sự kiện thành công",
       events: data,
+      total: count,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(count / parseInt(limit)),
     });
   } catch (error) {
     return res.status(500).json({ message: "Lỗi server", error: error.message });

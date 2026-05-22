@@ -2,11 +2,13 @@ const API_URL = "http://localhost:3000/api/events";
 
 const getToken = () => localStorage.getItem("token");
 
-export const getEvents = async ({ search = "", status = "" } = {}) => {
+export const getEvents = async ({ search = "", status = "", page = 1, limit = 10 } = {}) => {
     const params = new URLSearchParams();
 
     if (search) params.append("search", search);
     if (status) params.append("status", status);
+    params.append("page", page);
+    params.append("limit", limit);
 
     const res = await fetch(`${API_URL}?${params.toString()}`, {
         headers: {
