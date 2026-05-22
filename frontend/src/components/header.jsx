@@ -34,13 +34,19 @@ export function Header() {
   const navigate = useNavigate()
 
   useEffect(() => {
+    const token = localStorage.getItem('user_token')
     const raw = localStorage.getItem('user_info')
-    if (raw) {
+    if (token && raw) {
       try {
         setUser(JSON.parse(raw))
       } catch {
         setUser(null)
       }
+    } else {
+      if (raw && !token) {
+        localStorage.removeItem('user_info')
+      }
+      setUser(null)
     }
   }, [])
 
