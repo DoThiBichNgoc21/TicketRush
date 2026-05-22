@@ -261,19 +261,21 @@ export default function CheckoutPage() {
                 <span>{orderResult.totalAmount.toLocaleString('vi-VN')}đ</span>
               </div>
             </div>
-            <Button
-              className="w-full h-12 font-bold"
-              onClick={() => navigate('/my-tickets')}
-            >
-              Xem vé của tôi
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-12 font-bold"
-              onClick={() => navigate(`/booking/${showtimeId}`)}
-            >
-              Về trang sự kiện
-            </Button>
+            <div className="space-y-3">
+              <Button 
+                className="w-full h-12 rounded-xl font-bold bg-primary text-primary-foreground hover:scale-[1.02] transition-transform"
+                onClick={() => navigate('/my-tickets', { state: { expandBookingId: orderResult.bookingId } })}
+              >
+                Xem vé
+              </Button>
+              <Button 
+                variant="outline"
+                className="w-full h-12 rounded-xl font-bold hover:bg-muted"
+                onClick={() => navigate('/')}
+              >
+                Về trang chủ
+              </Button>
+            </div>
           </div>
         </main>
         <Footer />
