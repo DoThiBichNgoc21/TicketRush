@@ -5,6 +5,8 @@ import { Toaster } from './components/ui/sonner';
 import HomePage from './pages/HomePage';
 import UserLogin from './pages/user/Login';
 import UserRegister from './pages/user/Register';
+import VerifyEmailPage from './pages/user/VerifyEmailPage';
+import CheckYourEmailPage from './pages/user/CheckYourEmailPage';
 import UserEventsPage from './pages/user/EventsPage';
 import EventDetailPage from './pages/user/EventDetailPage';
 import BookingPage from './pages/user/BookingPage';
@@ -27,6 +29,8 @@ import CreateEventStep3 from './pages/admin/adminEvents_3';
 import UserManagement from "./pages/admin/adminUserManagement";
 import AdminRevenue from "./pages/admin/adminRevenue";
 import AdminInstruction from "./pages/admin/adminInstruction";
+import AdminDiscount from "./pages/admin/adminDiscount";
+import AdminCreateDiscount from "./pages/admin/adminDiscountCreate";
 
 // --- IMPORT CSS ---
 import './index.css';
@@ -40,6 +44,8 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<UserLogin />} />
         <Route path="/register" element={<UserRegister />} />
+        <Route path="/check-your-email" element={<CheckYourEmailPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/su-kien" element={<UserEventsPage />} />
         <Route path="/event/:id" element={<EventDetailPage />} />
         <Route path="/booking/:showtimeId" element={<BookingPage />} />
@@ -63,6 +69,8 @@ function App() {
         <Route path="/admin/usermanagement" element={<UserManagement />} />
         <Route path="/admin/revenue" element={<AdminRevenue />} />
         <Route path="/admin/instruction" element={<AdminInstruction />} />
+        <Route path="/admin/discount" element={<AdminDiscount />} />
+        <Route path="/api/discount/create" element={<AdminCreateDiscount />} />
       </Routes>
 
       {/* Hiển thị thông báo Toast cho toàn hệ thống */}

@@ -631,25 +631,28 @@ export default function SupportContactAdmin() {
                         onClick={() => navigate("/admin/revenue")}
                         className="flex items-center w-full px-6 py-3 space-x-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
                     >
-                        <span className="material-symbols-outlined">confirmation_number</span>
+                        <span className="material-symbols-outlined">analytics</span>
                         <span>Doanh thu</span>
+                    </button>
+
+                    <button
+                        onClick={() => navigate("/admin/discount")}
+                        className="flex items-center px-6 py-3 space-x-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 hover:text-gray-900 dark:hover:text-gray-100 transition-all active:translate-x-1 duration-200 font-sans font-medium text-sm w-full text-left"
+                    >
+                        <span className="material-symbols-outlined">confirmation_number</span>
+                        <span>Mã giảm giá</span>
                     </button>
 
                     <button
                         onClick={() => navigate("/admin/instruction")}
                         className="flex items-center w-full px-6 py-3 space-x-3 bg-red-50 text-red-600 border-l-4 border-red-600 active:translate-x-1 duration-200 font-sans font-medium text-sm text-left"
                     >
-                        <span className="material-symbols-outlined">analytics</span>
+                        <span className="material-symbols-outlined">help</span>
                         <span>Hỗ trợ & Liên hệ</span>
                     </button>
                 </nav>
 
                 <div className="px-6 pt-6 border-t border-gray-200 space-y-1">
-                    <button className="flex items-center w-full py-2 space-x-3 text-gray-600 hover:text-gray-900 transition-all font-sans font-medium text-sm text-left">
-                        <span className="material-symbols-outlined">help</span>
-                        <span>Hỗ trợ</span>
-                    </button>
-
                     <button
                         onClick={() => navigate("/")}
                         className="flex items-center w-full py-2 space-x-3 text-gray-600 hover:text-gray-900 transition-all font-sans font-medium text-sm text-left"

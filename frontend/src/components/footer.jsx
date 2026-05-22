@@ -37,6 +37,7 @@ export function Footer() {
     const fetchContactData = async () => {
       try {
         const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+        const response = await fetch(`${API_BASE_URL}/api/admin/support/articles/contact`);
         const response = await fetch(`${API_BASE_URL}/api/support/contact`);
         const result = await response.json();
         if (response.ok && result.data && result.data.id) {
