@@ -11,9 +11,10 @@ export function EventSection() {
   const [loading, setLoading] = useState(true)
 
   const tabs = [
+    { id: "all", label: "TẤT CẢ" },
+    { id: "ongoing", label: "ĐANG DIỄN RA" },
     { id: "upcoming", label: "SẮP DIỄN RA" },
-    { id: "coming-soon", label: "MỞ BÁN SỚM" },
-    { id: "sold-out", label: "ĐÃ DIỄN RA" },
+    { id: "ended", label: "ĐÃ KẾT THÚC" },
   ]
 
   useEffect(() => {
@@ -24,15 +25,19 @@ export function EventSection() {
         let query = supabase
           .from('events')
           .select('*')
+          .in('status', ['published', 'ended'])
 
         // Nới lỏng điều kiện lọc để hiển thị được nhiều sự kiện hơn khi đang phát triển
-        if (activeTab === "upcoming") {
-          // Hiển thị cả bản nháp và đã xuất bản nếu ngày chưa qua
-          query = query.gte('date', new Date().toISOString())
-        } else if (activeTab === "coming-soon") {
-          query = query.eq('status', 'draft')
-        } else if (activeTab === "sold-out") {
-          query = query.or('status.eq.ended,date.lt.' + new Date().toISOString())
+        const now = new Date();
+        const todayStart = new Date(now.setHours(0, 0, 0, 0)).toISOString();
+        const todayEnd = new Date(now.setHours(23, 59, 59, 999)).toISOString();
+
+        if (activeTab === "ongoing") {
+          query = query.gte('date', todayStart).lte('date', todayEnd);
+        } else if (activeTab === "upcoming") {
+          query = query.gt('date', todayEnd);
+        } else if (activeTab === "ended") {
+          query = query.or(`status.eq.ended,date.lt.${todayStart}`);
         }
 
         const { data, error } = await query.order('date', { ascending: true })
