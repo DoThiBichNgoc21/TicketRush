@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Header } from '../../components/header'
 import { Footer } from '../../components/footer'
 import { Button } from '../../components/ui/button'
@@ -21,6 +21,7 @@ import { getUserToken } from '../../lib/bookingAxios'
 
 export default function MyTickets() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [expandedBooking, setExpandedBooking] = useState(null)
@@ -36,6 +37,13 @@ export default function MyTickets() {
 
     loadBookings()
   }, [navigate])
+
+  // Tự động mở rộng đơn hàng nếu đi từ trang thanh toán thành công
+  useEffect(() => {
+    if (location.state?.expandBookingId) {
+      setExpandedBooking(location.state.expandBookingId)
+    }
+  }, [location.state])
 
   // Tự động generate QR code khi bookings được load
   useEffect(() => {
@@ -163,7 +171,30 @@ export default function MyTickets() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {bookings.map((booking) => (
+            {/* Thanh thông báo nếu đang lọc xem 1 vé vừa đặt */}
+            {location.state?.expandBookingId && expandedBooking && (
+              <div className="flex items-center justify-between bg-primary/10 border border-primary/20 p-4 rounded-xl mb-6">
+                <p className="text-sm font-medium text-primary">
+                  Đang hiển thị vé bạn vừa đặt.
+                </p>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-primary hover:bg-primary/20 font-bold"
+                  onClick={() => {
+                    setExpandedBooking(null)
+                    // Xóa state để hiện lại tất cả
+                    navigate(location.pathname, { replace: true, state: {} })
+                  }}
+                >
+                  Xem tất cả vé của tôi
+                </Button>
+              </div>
+            )}
+
+            {bookings
+              .filter(b => !location.state?.expandBookingId || b.booking_id === location.state.expandBookingId)
+              .map((booking) => (
               <Card
                 key={booking.booking_id}
                 className="overflow-hidden hover:shadow-lg transition-shadow"

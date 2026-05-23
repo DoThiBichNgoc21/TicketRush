@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { Button } from "./ui/button"
 import { EventCard } from "./event-card"
 import { supabase } from "../lib/supabaseClient"
 
 export function EventSection() {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState("upcoming")
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -130,7 +132,12 @@ export function EventSection() {
 
         {/* View All Button */}
         <div className="text-center mt-8">
-          <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+          <Button
+            variant="outline"
+            size="lg"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+            onClick={() => navigate('/su-kien')}
+          >
             Xem tất cả sự kiện
           </Button>
         </div>
