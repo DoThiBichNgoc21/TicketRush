@@ -3,12 +3,12 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Header } from '../../components/header';
 import { Footer } from '../../components/footer';
 import axiosInstance from '../../lib/axiosInstance';
-import { 
-    Search, 
-    BookOpen, 
-    ChevronRight, 
-    HelpCircle, 
-    ShieldCheck, 
+import {
+    Search,
+    BookOpen,
+    ChevronRight,
+    HelpCircle,
+    ShieldCheck,
     Users,
     ArrowLeft,
     Mail,
@@ -60,7 +60,7 @@ const InstructionPage = () => {
         fetchData();
     }, [slug]);
 
-    const filteredArticles = articles.filter(article => 
+    const filteredArticles = articles.filter(article =>
         article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         article.short_description?.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -90,12 +90,12 @@ const InstructionPage = () => {
     return (
         <div className="min-h-screen bg-background text-foreground">
             <Header />
-            
+
             <main className="pt-24 pb-12 min-h-[calc(100vh-200px)]">
                 {currentArticle ? (
                     <div className="container mx-auto px-4 max-w-4xl">
-                        <Button 
-                            variant="ghost" 
+                        <Button
+                            variant="ghost"
                             className="mb-6 hover:text-primary transition-colors"
                             onClick={() => navigate('/huong-dan')}
                         >
@@ -117,9 +117,9 @@ const InstructionPage = () => {
                                     {currentArticle.title}
                                 </h1>
                             </div>
-                            
+
                             <div className="px-8 py-10">
-                                <div 
+                                <div
                                     className="prose prose-slate dark:prose-invert max-w-none 
                                     prose-headings:font-bold prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
                                     prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-6"
@@ -135,10 +135,10 @@ const InstructionPage = () => {
                             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                                 Tìm kiếm hướng dẫn, câu hỏi thường gặp và chính sách của chúng tôi.
                             </p>
-                            
+
                             <div className="max-w-xl mx-auto mt-8 relative">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                                <Input 
+                                <Input
                                     className="pl-12 h-14 text-lg rounded-full shadow-lg border-primary/20 focus-visible:ring-primary"
                                     placeholder="Bạn cần giúp đỡ điều gì?"
                                     value={searchQuery}
@@ -182,8 +182,8 @@ const InstructionPage = () => {
                                 ))}
                             </div>
 
-                            <div className="space-y-6">
-                                <Card className="bg-primary/5 border-none shadow-none">
+                            {/* <div className="space-y-6">
+                                { <Card className="bg-primary/5 border-none shadow-none">
                                     <CardHeader>
                                         <CardTitle className="text-lg text-primary">Liên hệ hỗ trợ</CardTitle>
                                     </CardHeader>
@@ -200,8 +200,8 @@ const InstructionPage = () => {
                                             </Button>
                                         </div>
                                     </CardContent>
-                                </Card>
-                            </div>
+                                </Card> }
+                            </div> */}
                         </div>
                     </div>
                 )}

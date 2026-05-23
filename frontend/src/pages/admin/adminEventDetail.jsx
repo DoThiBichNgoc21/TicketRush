@@ -586,56 +586,11 @@ export default function EventDetail() {
                             </div>
                         </div>
 
-                        <div className="tr-sidebar-box">
-                            <h4 className="tr-section-title">Thống kê nhanh</h4>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <div>
-                                    <div className="tr-info-label">Tổng doanh thu</div>
-                                    <div className="tr-info-val" style={{ color: 'var(--tr-primary)', fontSize: '20px' }}>8.450.000.000đ</div>
-                                </div>
-                                <div>
-                                    <div className="tr-info-label">Tỷ lệ lấp đầy</div>
-                                    <div className="tr-info-val">85%</div>
-                                </div>
-                            </div>
-                        </div>
 
                         <div className="tr-sidebar-box">
                             <h4 className="tr-section-title">Mô tả sự kiện</h4>
                             <div className="tr-desc-text" style={{ padding: 0, background: 'transparent' }}>
                                 {event.description || "Chưa có mô tả cho sự kiện này."}
-                            </div>
-                        </div>
-
-                        <div className="tr-sidebar-box">
-                            <h4 className="tr-section-title">Hạng vé & Trạng thái</h4>
-                            <div style={{ overflowX: 'auto' }}>
-                                <table className="tr-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Loại vé</th>
-                                            <th>Giá</th>
-                                            <th>Đã bán</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td><strong>VIP Diamond</strong></td>
-                                            <td>2.500.000đ</td>
-                                            <td>485/500</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>VIP Gold</strong></td>
-                                            <td>1.800.000đ</td>
-                                            <td>1.200/1.500</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Standard</strong></td>
-                                            <td>900.000đ</td>
-                                            <td>7.415/8.000</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                     </aside>

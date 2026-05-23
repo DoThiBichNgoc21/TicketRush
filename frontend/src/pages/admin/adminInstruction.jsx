@@ -665,16 +665,8 @@ export default function SupportContactAdmin() {
 
             {/* TopAppBar */}
             <header className="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-surface border-b border-outline-variant flex justify-between items-center px-8 z-40">
-                <div className="flex items-center bg-surface-container-low px-4 py-2 rounded-full w-96">
-                    <span className="material-symbols-outlined text-secondary mr-2">
-                        search
-                    </span>
-                    <input
-                        className="bg-transparent border-none focus:ring-0 text-sm w-full"
-                        placeholder="Tìm kiếm nội dung hỗ trợ..."
-                        type="text"
-                        {...focusProps}
-                    />
+                <div className="flex items-center bg-surface-container-low px-0 py-0 rounded-full w-96">
+                    
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -683,7 +675,7 @@ export default function SupportContactAdmin() {
                         type="button"
                     >
                         <span className="material-symbols-outlined text-on-surface-variant">
-                            notifications
+                            
                         </span>
                     </button>
 
@@ -692,15 +684,23 @@ export default function SupportContactAdmin() {
                         type="button"
                     >
                         <span className="material-symbols-outlined text-on-surface-variant">
-                            settings
+                            
                         </span>
                     </button>
 
                     <div className="h-8 w-[1px] bg-outline-variant mx-2" />
 
-                    <span className="font-button text-button text-primary">
-                        TicketRush Admin
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <img
+                        alt="Admin Avatar"
+                        className="w-8 h-8 rounded-full border border-zinc-200"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBI4L469l41S96xmgUHO9nKcD6KjsjoY_CVrTYLhYJc2VbE_zW5HxkzmSHwIqlfM0KnEC-WL19TO9x8R9fX7DtyME_y5-8NbOLI0cLEZgatjSDfTB-PGQZHwDd-4U8ZPWilCGvdIHAvJQF51sUbFjEmPkKA55lVy0Rfz9PAzztd_7raBTqPbD3wEqqgDyb_VLrdTFN-bio2dOA5RPCapydLuVMsmSNR5t0_u-jS8bZqm99huUUyrRAWdmMK0fPkBAWoHA1ihXEDUyg"
+                        />
+
+                        <span className="text-sm font-semibold hidden lg:block">
+                        System Admin
+                        </span>
+                    </div>
                 </div>
             </header>
 
@@ -1457,18 +1457,6 @@ export default function SupportContactAdmin() {
                     </div>
                 </div>
             </main>
-
-            {/* FAB for quick action */}
-            <button
-                className="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group"
-                type="button"
-            >
-                <span className="material-symbols-outlined">support_agent</span>
-
-                <span className="absolute right-full mr-4 px-3 py-1 bg-inverse-surface text-inverse-on-surface text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    Hỗ trợ khẩn cấp
-                </span>
-            </button>
         </div>
     );
 }

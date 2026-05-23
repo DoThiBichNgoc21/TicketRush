@@ -15,6 +15,7 @@ import bookingRouter from "./src/Routers/bookingRouter.js";
 import ticketRouter from "./src/Routers/ticketRouter.js";
 import supportRouter from "./src/Routers/supportRouter.js";
 import eventFilterRouter from "./src/Routers/eventFilterRouter.js";
+import adminDashboardRouter from "./src/Routers/adminDashboardRouter.js";
 import discountRouter from "./src/Routers/discountRouter.js";
 import { startSeatReleaseWorker } from "./src/jobs/seatReleaseWorker.js";
 
@@ -30,6 +31,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use("/api/tasks", tasksRouter);
 app.use("/api/auth", authRouter); // Route của người làm User
 app.use("/api/admin/login", adminAuthRouter); // Route của người làm Admin
+app.use("/api/admin-dashboard", adminDashboardRouter); // Route của trang Admin Dashboard thực tế
 app.use("/api/admin/events", adminEventRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/usermanagement", adminUserManagement);

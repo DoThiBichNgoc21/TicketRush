@@ -306,12 +306,40 @@ function CreateEventStep2() {
                     onChange={(e) => updateCity(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border rounded-lg mt-2 focus:ring-2 focus:ring-red-700 outline-none"
                   >
-                    <option value="">Chọn tỉnh thành</option>
                     <option value="Hà Nội">Hà Nội</option>
-                    <option value="TP.HCM">TP.HCM</option>
-                    <option value="Đà Nẵng">Đà Nẵng</option>
-                    <option value="Cần Thơ">Cần Thơ</option>
+                    <option value="Huế">Huế</option>
                     <option value="Hải Phòng">Hải Phòng</option>
+                    <option value="Đà Nẵng">Đà Nẵng</option>
+                    <option value="Thành phố Hồ Chí Minh">Thành phố Hồ Chí Minh</option>
+                    <option value="Cần Thơ">Cần Thơ</option>
+                    <option value="Cao Bằng">Cao Bằng</option>
+                    <option value="Điện Biên">Điện Biên</option>
+                    <option value="Hà Tĩnh">Hà Tĩnh</option>
+                    <option value="Lai Châu">Lai Châu</option>
+                    <option value="Lạng Sơn">Lạng Sơn</option>
+                    <option value="Nghệ An">Nghệ An</option>
+                    <option value="Quảng Ninh">Quảng Ninh</option>
+                    <option value="Thanh Hóa">Thanh Hóa</option>
+                    <option value="Sơn La">Sơn La</option>
+                    <option value="Tuyên Quang">Tuyên Quang</option>
+                    <option value="Lào Cai">Lào Cai</option>
+                    <option value="Thái Nguyên">Thái Nguyên</option>
+                    <option value="Phú Thọ">Phú Thọ</option>
+                    <option value="Bắc Ninh">Bắc Ninh</option>
+                    <option value="Hưng Yên">Hưng Yên</option>
+                    <option value="Ninh Bình">Ninh Bình</option>
+                    <option value="Quảng Trị">Quảng Trị</option>
+                    <option value="Quảng Ngãi">Quảng Ngãi</option>
+                    <option value="Gia Lai">Gia Lai</option>
+                    <option value="Khánh Hòa">Khánh Hòa</option>
+                    <option value="Lâm Đồng">Lâm Đồng</option>
+                    <option value="Đắk Lắk">Đắk Lắk</option>
+                    <option value="Đồng Nai">Đồng Nai</option>
+                    <option value="Tây Ninh">Tây Ninh</option>
+                    <option value="Vĩnh Long">Vĩnh Long</option>
+                    <option value="Đồng Tháp">Đồng Tháp</option>
+                    <option value="Cà Mau">Cà Mau</option>
+                    <option value="An Giang">An Giang</option>
                   </select>
                 </div>
               </div>
@@ -402,21 +430,19 @@ function Step({ done, active, number, label }) {
   return (
     <div className="relative z-10 flex flex-col items-center">
       <div
-        className={`w-10 h-10 flex items-center justify-center rounded-full font-bold text-sm transition-all ${
-          done
+        className={`w-10 h-10 flex items-center justify-center rounded-full font-bold text-sm transition-all ${done
             ? "bg-red-700 text-white"
             : active
-            ? "bg-red-700 text-white ring-4 ring-red-100"
-            : "bg-white border-2 border-slate-200 text-slate-400"
-        }`}
+              ? "bg-red-700 text-white ring-4 ring-red-100"
+              : "bg-white border-2 border-slate-200 text-slate-400"
+          }`}
       >
         {done ? "✓" : number}
       </div>
 
       <span
-        className={`mt-2 text-xs font-semibold ${
-          active || done ? "text-red-700" : "text-slate-400"
-        }`}
+        className={`mt-2 text-xs font-semibold ${active || done ? "text-red-700" : "text-slate-400"
+          }`}
       >
         {label}
       </span>

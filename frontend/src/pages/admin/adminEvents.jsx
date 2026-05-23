@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { getEvents, toggleEventVisibility, updateEvent } from "../../api/eventApi";
+import { getEvents, toggleEventVisibility, updateEvent, deleteEvent } from "../../api/eventApi";
 import { useNavigate } from "react-router-dom";
 
 
@@ -159,6 +159,23 @@ export default function AdminEvents() {
     setPagination(prev => ({ ...prev, page: newPage }));
   };
 
+  const handleDeleteEvent = async (id, eventName) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa sự kiện bản nháp "${eventName}" không? Hành động này không thể hoàn tác.`)) {
+      return;
+    }
+    try {
+      setLoading(true);
+      const res = await deleteEvent(id);
+      alert(res.message || "Xóa sự kiện thành công!");
+      fetchEvents({ page: 1 }); // Quay lại trang 1 và tải lại danh sách sự kiện
+    } catch (error) {
+      console.error("Lỗi khi xóa sự kiện:", error);
+      alert("Đã xảy ra lỗi khi xóa sự kiện!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const totalEvents = globalStats.total;
   const publishedEvents = globalStats.published;
 
@@ -184,19 +201,7 @@ export default function AdminEvents() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors text-zinc-600">
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-
-            <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors text-zinc-600">
-              <span className="material-symbols-outlined">help</span>
-            </button>
-
-            <button className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors text-zinc-600">
-              <span className="material-symbols-outlined">settings</span>
-            </button>
-          </div>
+          
 
           <div className="h-8 w-px bg-zinc-200 mx-2" />
 
@@ -204,7 +209,7 @@ export default function AdminEvents() {
             <img
               alt="Admin Avatar"
               className="w-8 h-8 rounded-full border border-zinc-200"
-              src="https://lh3.googleusercontent.com/aida/ADBb0ugYexK1ZND4JINj1NbXIBL2RqGA2yHl9XVYCNSx6RzORV0GXWjge_89Vm88tOYo1yeNvJ15W97YmtbvII5vCGNdhCv8gobP-Z0TMAAUEEt20ClX5B9tZQC0zeptx9t6fEX5zvj7pnPNq5esqVxAiWHQIhRf8IpSKLKmLQXtgTSD17mz6tZuaDAfyKE_ObVtGvjeg81FwPaBKd6mL9EF0WffcaldwRdImnepmhmawjhRY4-UD6ylLjW-q1NKRiMebA2DRZ7eFboA"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBI4L469l41S96xmgUHO9nKcD6KjsjoY_CVrTYLhYJc2VbE_zW5HxkzmSHwIqlfM0KnEC-WL19TO9x8R9fX7DtyME_y5-8NbOLI0cLEZgatjSDfTB-PGQZHwDd-4U8ZPWilCGvdIHAvJQF51sUbFjEmPkKA55lVy0Rfz9PAzztd_7raBTqPbD3wEqqgDyb_VLrdTFN-bio2dOA5RPCapydLuVMsmSNR5t0_u-jS8bZqm99huUUyrRAWdmMK0fPkBAWoHA1ihXEDUyg"
             />
 
             <span className="text-sm font-semibold hidden lg:block">
@@ -213,6 +218,10 @@ export default function AdminEvents() {
           </div>
         </div>
       </header>
+
+
+    
+      
 
       {/* SideNavBar */}
       <aside className="h-screen w-64 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 fixed left-0 top-0 z-50 flex flex-col py-6 space-y-2">
@@ -342,20 +351,7 @@ export default function AdminEvents() {
               </h3>
             </div>
 
-            <div className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-green-50 text-green-600 rounded">
-                  <span className="material-symbols-outlined">payments</span>
-                </div>
 
-                <span className="text-xs font-bold text-zinc-400 bg-zinc-50 px-2 py-1 rounded">
-                  Tháng này
-                </span>
-              </div>
-
-              <p className="text-zinc-500 text-sm font-medium">Doanh thu</p>
-              <h3 className="text-2xl font-black text-zinc-900">0 VNĐ</h3>
-            </div>
           </div>
 
           {/* Filter & List Area */}
@@ -492,7 +488,6 @@ export default function AdminEvents() {
                           <div className="text-sm font-semibold text-zinc-700">
                             {formatDate(event.date)}
                           </div>
-                          <div className="text-xs text-zinc-500">--:--</div>
                         </td>
 
                         <td className="px-6 py-4">
@@ -507,13 +502,15 @@ export default function AdminEvents() {
                         <td className="px-6 py-4">
                           <div className="w-full max-w-[120px]">
                             <div className="flex justify-between text-xs font-bold mb-1">
-                              <span>0 / 0</span>
-                              <span className="text-[#e00d0d]">0%</span>
+                              <span>{event.ticketsSold || 0} / {event.totalSeats || 0}</span>
+                              <span className="text-[#e00d0d]">
+                                {event.totalSeats > 0 ? Math.round((event.ticketsSold / event.totalSeats) * 100) : 0}%
+                              </span>
                             </div>
                             <div className="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden">
                               <div
                                 className="bg-[#e00d0d] h-full"
-                                style={{ width: "0%" }}
+                                style={{ width: `${event.totalSeats > 0 ? Math.round((event.ticketsSold / event.totalSeats) * 100) : 0}%` }}
                               />
                             </div>
                           </div>
@@ -547,17 +544,19 @@ export default function AdminEvents() {
                             </button>
 
 
-                            <button className="p-2 hover:bg-zinc-200 rounded text-zinc-500 transition-colors">
-                              <span className="material-symbols-outlined text-xl">
-                                edit
-                              </span>
-                            </button>
 
-                            <button className="p-2 hover:bg-red-50 rounded text-red-500 transition-colors">
-                              <span className="material-symbols-outlined text-xl">
-                                delete
-                              </span>
-                            </button>
+
+                            {event.status === "draft" && (
+                              <button
+                                onClick={() => handleDeleteEvent(event.id, event.name)}
+                                className="p-2 hover:bg-red-50 rounded text-red-500 transition-colors"
+                                title="Xóa bản nháp"
+                              >
+                                <span className="material-symbols-outlined text-xl">
+                                  delete
+                                </span>
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

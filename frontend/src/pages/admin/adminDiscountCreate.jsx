@@ -503,7 +503,7 @@ export default function AdminCreateDiscount() {
       [field]: value,
     }));
   };
-    useEffect(() => {
+  useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoadingEvents(true);
@@ -677,10 +677,10 @@ export default function AdminCreateDiscount() {
         tiers:
           formData.discount_type === "tiered"
             ? tiers.map((tier) => ({
-                min_quantity: Number(tier.min_quantity),
-                discount_type: tier.discount_type,
-                discount_value: Number(tier.discount_value),
-              }))
+              min_quantity: Number(tier.min_quantity),
+              discount_type: tier.discount_type,
+              discount_value: Number(tier.discount_value),
+            }))
             : [],
       };
 
@@ -849,11 +849,10 @@ export default function AdminCreateDiscount() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <label
-                  className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                    formData.apply_scope === "all"
+                  className={`cursor-pointer rounded-xl border p-4 transition-all ${formData.apply_scope === "all"
                       ? "border-[#e00d0d] ring-1 ring-[#e00d0d]"
                       : "border-[#e8bcb6]"
-                  }`}
+                    }`}
                 >
                   <input
                     checked={formData.apply_scope === "all"}
@@ -887,11 +886,10 @@ export default function AdminCreateDiscount() {
                 </label>
 
                 <label
-                  className={`cursor-pointer rounded-xl border p-4 transition-all ${
-                    formData.apply_scope === "events"
+                  className={`cursor-pointer rounded-xl border p-4 transition-all ${formData.apply_scope === "events"
                       ? "border-[#e00d0d] ring-1 ring-[#e00d0d]"
                       : "border-[#e8bcb6]"
-                  }`}
+                    }`}
                 >
                   <input
                     checked={formData.apply_scope === "events"}
@@ -952,11 +950,10 @@ export default function AdminCreateDiscount() {
 
                         return (
                           <label
-                            className={`flex cursor-pointer items-center justify-between rounded-lg border bg-white p-4 transition-all ${
-                              checked
+                            className={`flex cursor-pointer items-center justify-between rounded-lg border bg-white p-4 transition-all ${checked
                                 ? "border-[#e00d0d] ring-1 ring-[#e00d0d]"
                                 : "border-[#e8bcb6]"
-                            }`}
+                              }`}
                             key={eventItem.id}
                           >
                             <div className="flex items-center gap-3">
@@ -1025,11 +1022,10 @@ export default function AdminCreateDiscount() {
 
                   return (
                     <label
-                      className={`group relative flex cursor-pointer flex-col rounded-xl border p-4 transition-all hover:bg-[#f3f4f5] ${
-                        checked
+                      className={`group relative flex cursor-pointer flex-col rounded-xl border p-4 transition-all hover:bg-[#f3f4f5] ${checked
                           ? "border-[#e00d0d] ring-1 ring-[#e00d0d]"
                           : "border-[#e8bcb6]"
-                      }`}
+                        }`}
                       key={option.value}
                     >
                       <input
@@ -1049,11 +1045,10 @@ export default function AdminCreateDiscount() {
                         </span>
 
                         <div
-                          className={`h-4 w-4 rounded-full border-2 transition-all ${
-                            checked
+                          className={`h-4 w-4 rounded-full border-2 transition-all ${checked
                               ? "border-[#b30004] bg-[#b30004]"
                               : "border-[#e8bcb6]"
-                          }`}
+                            }`}
                         />
                       </div>
 
@@ -1262,28 +1257,7 @@ export default function AdminCreateDiscount() {
             </div>
           </section>
 
-          <div className="pt-8">
-            <div className="flex flex-col items-center justify-between gap-6 rounded-xl border border-[#e8bcb6] bg-[#f3f4f5] p-6 md:flex-row">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#b30004]/10 text-[#b30004]">
-                  <span className="material-symbols-outlined">visibility</span>
-                </div>
 
-                <div>
-                  <p className="text-sm font-semibold text-[#191c1d]">
-                    Đang soạn thảo
-                  </p>
-                  <p className="text-base text-[#5f5e5e]">
-                    Mã sẽ ở trạng thái tạm sau khi lưu.
-                  </p>
-                </div>
-              </div>
-
-              <span className="rounded-full bg-[#b30004] px-3 py-1 text-xs font-bold text-white">
-                NHẬP LIỆU
-              </span>
-            </div>
-          </div>
         </div>
       </div>
 
