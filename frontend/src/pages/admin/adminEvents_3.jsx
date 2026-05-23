@@ -580,9 +580,6 @@ const TicketRushSeatMapDesign = () => {
                             >
                               <option value="Standard">Standard</option>
                               <option value="VIP">VIP</option>
-                              <option value="VVIP">VVIP</option>
-                              <option value="Premium">Premium</option>
-                              <option value="Economy">Economy</option>
                             </select>
                           </div>
                         </div>

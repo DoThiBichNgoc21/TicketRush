@@ -188,12 +188,12 @@ export function Header() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 h-16">
-            <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" asChild>
+            {/* <Button variant="ghost" size="sm" className="hidden sm:flex gap-2 font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" asChild>
               <Link to="/admin">
                 <Shield className="w-4 h-4" />
                 Admin
               </Link>
-            </Button>
+            </Button> */}
 
             {user ? (
               <DropdownMenu>

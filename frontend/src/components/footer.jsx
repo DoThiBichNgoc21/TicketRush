@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { Phone, Mail, Share2, Video, Camera, Ticket, MapPin } from "lucide-react"
+import { Phone, Mail, Facebook, Send, Instagram, Ticket, MapPin } from "lucide-react"
 
 const footerLinks = {
   "Về chúng tôi": [
@@ -94,15 +94,15 @@ export function Footer() {
                 <span>{contactData.support_email}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Share2 className="w-4 h-4 text-primary flex-shrink-0" />
+                <Facebook className="w-4 h-4 text-primary flex-shrink-0" />
                 <a href={contactData.facebook_page} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">Facebook: TicketRush</a>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Camera className="w-4 h-4 text-primary flex-shrink-0" />
+                <Instagram className="w-4 h-4 text-primary flex-shrink-0" />
                 <a href={contactData.instagram_page} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">Instagram: @ticketrush</a>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Video className="w-4 h-4 text-primary flex-shrink-0" />
+                <Send className="w-4 h-4 text-primary flex-shrink-0" />
                 <span>Zalo OA: {contactData.zalo_oa_id || "Đang cập nhật"}</span>
               </div>
             </div>
@@ -116,7 +116,7 @@ export function Footer() {
                 className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                 aria-label="Facebook"
               >
-                <Share2 className="w-5 h-5" />
+                <Facebook className="w-5 h-5" />
               </a>
               <a
                 href={contactData.zalo_oa_id}
@@ -125,7 +125,7 @@ export function Footer() {
                 className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                 aria-label="Zalo"
               >
-                <Video className="w-5 h-5" />
+                <Send className="w-5 h-5" />
               </a>
               <a
                 href={contactData.instagram_page}
@@ -134,7 +134,7 @@ export function Footer() {
                 className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                 aria-label="Instagram"
               >
-                <Camera className="w-5 h-5" />
+                <Instagram className="w-5 h-5" />
               </a>
             </div>
           </div>

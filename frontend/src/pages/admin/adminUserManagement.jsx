@@ -518,7 +518,7 @@ function CustomersPage() {
             <div className="flex items-center gap-6">
 
               <div className="flex items-center gap-4">
-                
+
 
                 <div className="w-px h-6 bg-outline-variant"></div>
 
@@ -750,7 +750,7 @@ function CustomersPage() {
 
                     const birth_year = window.prompt("Nhập năm sinh", "");
 
-                    const roleInput = window.prompt("Nhập vai trò: user hoặc admin", "user");
+                    const roleInput = window.prompt("Nhập vai trò: admin");
 
                     const gender = ["Nam", "Nữ", "Khác"].includes(genderInput)
                       ? genderInput
@@ -874,7 +874,7 @@ function CustomersPage() {
                             className="material-symbols-outlined"
                             data-icon="edit"
                           >
-                            
+
                           </span>
                         </button>
 
