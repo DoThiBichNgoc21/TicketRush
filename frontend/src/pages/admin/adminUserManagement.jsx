@@ -483,7 +483,7 @@ function CustomersPage() {
           >
             <span className="material-symbols-outlined">confirmation_number</span>
             <span>Mã giảm giá</span>
-            </button>
+          </button>
 
           <button
             onClick={() => navigate("/admin/instruction")}
@@ -516,33 +516,9 @@ function CustomersPage() {
             </div>
 
             <div className="flex items-center gap-6">
-              <div className="relative hidden lg:block">
-                <span
-                  className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary"
-                  data-icon="search"
-                >
-                  search
-                </span>
-              </div>
 
               <div className="flex items-center gap-4">
-                <button className="p-2 text-secondary hover:bg-surface-container-high dark:hover:bg-on-surface-variant/30 rounded-full transition-all">
-                  <span
-                    className="material-symbols-outlined"
-                    data-icon="notifications"
-                  >
-                    notifications
-                  </span>
-                </button>
-
-                <button className="p-2 text-secondary hover:bg-surface-container-high dark:hover:bg-on-surface-variant/30 rounded-full transition-all">
-                  <span
-                    className="material-symbols-outlined"
-                    data-icon="settings"
-                  >
-                    settings
-                  </span>
-                </button>
+                
 
                 <div className="w-px h-6 bg-outline-variant"></div>
 
@@ -576,7 +552,7 @@ function CustomersPage() {
                   >
                     trending_up
                   </span>
-                  +14.2% tháng này
+                  Tăng trưởng trong 30 ngày qua
                 </p>
               </div>
 
@@ -598,20 +574,6 @@ function CustomersPage() {
                 </div>
               </div>
 
-              <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex flex-col gap-2">
-                <div className="flex justify-between items-start text-secondary">
-                  <span className="font-label-sm text-label-sm">
-                    Tỷ lệ hoạt động
-                  </span>
-                  <span className="material-symbols-outlined" data-icon="bolt">
-                    bolt
-                  </span>
-                </div>
-                <p className="text-h1 font-h1">{stats?.activeRate || 0}%</p>
-                <p className="text-[12px] text-secondary">
-                  Trung bình 4k users/ngày
-                </p>
-              </div>
             </div>
 
             <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-grid-gutter">
@@ -680,31 +642,55 @@ function CustomersPage() {
 
               <div className="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
                 <h3 className="font-label-sm text-label-sm text-secondary mb-6 flex items-center gap-2">
-                  <span
-                    className="material-symbols-outlined text-sm"
-                    data-icon="bar_chart"
-                  >
-                    bar_chart
-                  </span>
+                  <span className="material-symbols-outlined text-sm" data-icon="bar_chart">bar_chart</span>
                   Phân bổ Độ tuổi
                 </h3>
 
-                <div className="flex items-end justify-between h-32 gap-2 mt-4 px-2">
-                  {ageBars.map((bar) => (
-                    <div
-                      key={bar.label}
-                      className="group relative flex flex-col items-center flex-1"
-                    >
-                      <div
-                        className={`${bar.className} w-full rounded-t-sm chart-bar`}
-                        style={{ height: bar.height }}
-                      ></div>
-                      <span className="text-[10px] text-secondary mt-2">
-                        {bar.label}
-                      </span>
-                    </div>
-                  ))}
+                {/* Dynamic age distribution bar chart */}
+                <div className="flex items-end justify-between gap-3 mt-4 px-2" style={{ height: "200px" }}>
+                  {[
+                    { label: "<18", colorClass: "bg-outline-variant" },
+                    { label: "18-24", colorClass: "bg-primary" },
+                    { label: "25-34", colorClass: "bg-primary" },
+                    { label: "35-44", colorClass: "bg-secondary" },
+                    { label: "45+", colorClass: "bg-outline" },
+                  ].map(({ label, colorClass }) => {
+                    const group = stats?.ageStats?.[label] || { count: 0, percent: 0 };
+                    const barHeightPx = Math.max(group.percent, 2); // tối thiểu 2% để thấy bar
+                    return (
+                      <div key={label} className="group relative flex flex-col items-center flex-1 h-full justify-end">
+                        {/* Tooltip khi hover */}
+                        <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center z-10">
+                          <div className="bg-on-surface text-surface-container-lowest text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap"
+                            style={{ backgroundColor: "#191c1d", color: "#fff" }}>
+                            {group.count} người ({group.percent}%)
+                          </div>
+                          <div className="w-2 h-2 rotate-45 -mt-1" style={{ backgroundColor: "#191c1d" }}></div>
+                        </div>
+
+                        {/* Cột bar */}
+                        <div
+                          className={`${colorClass} w-full rounded-t-sm chart-bar transition-all duration-700`}
+                          style={{ height: `${barHeightPx}%` }}
+                        />
+
+                        {/* Nhãn % trên đầu bar */}
+                        <span className="text-[9px] font-bold text-secondary absolute"
+                          style={{ bottom: `calc(${barHeightPx}% + 4px)` }}>
+                          {group.percent > 0 ? `${group.percent}%` : ""}
+                        </span>
+
+                        {/* Nhãn nhóm tuổi bên dưới */}
+                        <span className="text-[10px] text-secondary mt-2 shrink-0">{label}</span>
+                      </div>
+                    );
+                  })}
                 </div>
+
+                {/* Chú thích tổng số người có dữ liệu tuổi */}
+                <p className="text-[15px] text-secondary mt-4 text-center">
+                  {Object.values(stats?.ageStats || {}).reduce((s, g) => s + g.count, 0)} người dùng đã có dữ liệu tuổi
+                </p>
               </div>
             </div>
           </div>
@@ -744,7 +730,7 @@ function CustomersPage() {
 
                 <button className="bg-primary text-on-primary px-6 py-2 rounded-lg font-button text-button hover:bg-primary-container transition-all flex items-center gap-2 shadow-sm active:scale-[0.98]"
                   onClick={async () => {
-                    const username = window.prompt("Nhập username:");
+                    const username = window.prompt("Nhập tên đăng nhập:");
                     if (!username) return;
 
                     const email = window.prompt("Nhập email:");
@@ -761,6 +747,8 @@ function CustomersPage() {
                       "Nhập giới tính: Nam, Nữ hoặc Khác",
                       "Khác"
                     );
+
+                    const birth_year = window.prompt("Nhập năm sinh", "");
 
                     const roleInput = window.prompt("Nhập vai trò: user hoặc admin", "user");
 
@@ -779,6 +767,7 @@ function CustomersPage() {
                         lastName,
                         phoneNumber,
                         gender,
+                        birth_year,
                         role,
                         status: "Hoạt động",
                       });
@@ -839,7 +828,9 @@ function CustomersPage() {
                             className="w-8 h-8 rounded-full"
                             src={user.avatar || `https://ui-avatars.com/api/?name=${user.name || user.username || "User"}`}
                           />
-                          <span className="font-bold">{user.name || user.username || "Không có tên"}</span>
+                          <span className="font-bold">
+                            {`${user.lastName || ""} ${user.firstName || ""}`.trim() || user.username || "Không có tên"}
+                          </span>
                         </div>
                       </td>
 
@@ -862,9 +853,20 @@ function CustomersPage() {
                       <td className="px-6 py-4 text-right">
                         <button
                           className="text-secondary hover:text-primary p-1"
-                          onClick={() => {
-                            const newStatus = user.status === "Hoạt động" ? "Đã khóa" : "Hoạt động";
-                            handleUpdateUserStatus(user.id, newStatus).catch(err => alert(err.message));
+                          onClick={async () => {
+                            try {
+                              const newStatus = user.status === "Hoạt động" ? "Đã khóa" : "Hoạt động";
+                              await handleUpdateUserStatus(user.id, newStatus);
+
+                              // Cập nhật state ngay
+                              setUsers(prevUsers =>
+                                prevUsers.map(u =>
+                                  u.id === user.id ? { ...u, status: newStatus } : u
+                                )
+                              );
+                            } catch (err) {
+                              alert(err.message);
+                            }
                           }}
                           title={`Chuyển trạng thái sang ${user.status === "Hoạt động" ? "Đã khóa" : "Hoạt động"}`}
                         >
@@ -872,7 +874,7 @@ function CustomersPage() {
                             className="material-symbols-outlined"
                             data-icon="edit"
                           >
-                            edit
+                            
                           </span>
                         </button>
 

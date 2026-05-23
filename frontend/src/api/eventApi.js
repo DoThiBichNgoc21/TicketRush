@@ -67,3 +67,14 @@ export const toggleEventVisibility = async (id, is_visible) => {
 
     return res.json();
 };
+
+export const deleteEvent = async (id) => {
+    const res = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+        headers: {
+            Authorization: `Bearer ${getToken()}`,
+        },
+    });
+
+    return res.json();
+};

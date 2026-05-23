@@ -1,26 +1,43 @@
+import axios from "axios";
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getEvents } from "../../api/eventApi";
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    const fetchRecentEvents = async () => {
-        try {
-            const result = await getEvents();
-            setEvents((result.events || []).slice(0, 5));
-        } catch (error) {
-            console.error("Lỗi lấy sự kiện gần đây:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [dashboard, setDashboard] = useState(null);
 
     useEffect(() => {
-        fetchRecentEvents();
-    }, []);
+        const fetchDashboard = async () => {
+            try {
+                // Lấy token từ localStorage (token, adminToken hoặc admin_token tùy vào luồng login)
+                const token = localStorage.getItem("token") || localStorage.getItem("adminToken") || localStorage.getItem("admin_token");
+
+                const res = await axios.get("http://localhost:3000/api/admin-dashboard", {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                // Lưu dữ liệu vào state
+                setDashboard(res.data);
+            } catch (error) {
+                console.error("Lỗi khi lấy dữ liệu dashboard:", error);
+                // Nếu 401 hoặc 403, điều hướng về login admin
+                if (error.response?.status === 401 || error.response?.status === 403) {
+                    navigate("/admin/login");
+                }
+            }
+        };
+
+        fetchDashboard();
+    }, [navigate]);
+
+    useEffect(() => {
+        if (dashboard?.recentEvents) {
+            setEvents(dashboard.recentEvents);
+            setLoading(false);
+        }
+    }, [dashboard]);
 
     const getCalculatedStatus = (event) => {
         if (!event) return "unknown";
@@ -54,6 +71,18 @@ export default function AdminDashboard() {
                 return <span className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold bg-gray-100 text-gray-500">CHƯA RÕ</span>;
         }
     };
+
+    const femalePercent = dashboard?.genderStats?.["Nữ"] ?? 52;
+    const malePercent = dashboard?.genderStats?.["Nam"] ?? 24;
+    const otherPercent = dashboard?.genderStats?.["Khác"] ?? 24;
+
+    const femaleDash = (femalePercent / 100) * 251.2;
+    const maleDash = (malePercent / 100) * 251.2;
+    const otherDash = (otherPercent / 100) * 251.2;
+
+    const maleOffset = -femaleDash;
+    const otherOffset = -(femaleDash + maleDash);
+
     return (
         <div className="bg-[#f8f9fa] text-[#191c1d] font-sans text-[16px] leading-[24px] overflow-hidden">
             <style>{`
@@ -123,7 +152,14 @@ export default function AdminDashboard() {
                 </nav>
                 <div className="px-6 pt-6 border-t border-gray-200 dark:border-gray-800 space-y-1">
                     <button
-                        onClick={() => navigate("/")}
+                        onClick={() => {
+                            localStorage.removeItem("token");
+                            localStorage.removeItem("adminToken");
+                            localStorage.removeItem("admin_token");
+                            localStorage.removeItem("admin_id");
+                            localStorage.removeItem("admin_username");
+                            navigate("/admin/login");
+                        }}
                         className="flex items-center w-full py-2 space-x-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-all font-sans font-medium text-sm text-left"
                     >
                         <span className="material-symbols-outlined" data-icon="logout">logout</span>
@@ -138,24 +174,15 @@ export default function AdminDashboard() {
                 <header className="sticky top-0 w-full flex items-center justify-between px-6 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm z-40 font-sans antialiased text-sm">
                     <div className="flex items-center space-x-8">
                         <div className="text-xl font-black tracking-tighter text-red-600 dark:text-red-500 uppercase">TicketRush</div>
-                        <div className="relative w-96">
-                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg" data-icon="search">search</span>
-                            <input className="w-full bg-gray-50 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-1 focus:ring-primary" placeholder="Tìm kiếm sự kiện, người dùng hoặc báo cáo..." type="text" />
-                        </div>
                     </div>
                     <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-2 mr-4">
                             <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
                             <span className="text-xs font-semibold text-gray-500">HỆ THỐNG ĐANG HOẠT ĐỘNG</span>
                         </div>
-                        <button className="p-2 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors rounded-full active:scale-95 duration-150">
-                            <span className="material-symbols-outlined" data-icon="notifications">notifications</span>
-                        </button>
-                        <button className="p-2 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors rounded-full active:scale-95 duration-150">
-                            <span className="material-symbols-outlined" data-icon="settings">settings</span>
-                        </button>
+                        
 
-                        <img alt="Admin profile" className="h-8 w-8 rounded-full border border-gray-200" data-alt="professional portrait of a middle-aged male administrator in a clean office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkwAngUbmfRR2-wc5vUWZK4vZ7G2_YR78BAiOcpjs_z9f700laYOsTgNt2tL7C9n4pPFbmQK-d1bFLMWZlV6CS46BRWk3UJmZztDGJZFMRBGdo1zxMhIBDlDi1Nieqtjd18vyaMRL2nBoU3Uoxv8vC9uzMhmMKEhB-SU-wamaB8FXeswCoW7DS888vEvH8T-DVbMw9Br5AVWyzky8T8C9DSuJwKmUbTHThwerjkN31Z2HbTIOhdsP8AL26xtS4lU897B1Hu3M9mE8" />
+                        <img alt="Admin profile" className="h-8 w-8 rounded-full border border-gray-200" data-alt="professional portrait of a middle-aged male administrator in a clean office environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBI4L469l41S96xmgUHO9nKcD6KjsjoY_CVrTYLhYJc2VbE_zW5HxkzmSHwIqlfM0KnEC-WL19TO9x8R9fX7DtyME_y5-8NbOLI0cLEZgatjSDfTB-PGQZHwDd-4U8ZPWilCGvdIHAvJQF51sUbFjEmPkKA55lVy0Rfz9PAzztd_7raBTqPbD3wEqqgDyb_VLrdTFN-bio2dOA5RPCapydLuVMsmSNR5t0_u-jS8bZqm99huUUyrRAWdmMK0fPkBAWoHA1ihXEDUyg" />
                     </div>
                 </header>
                 <div className="p-8 space-y-[24px]">
@@ -167,7 +194,7 @@ export default function AdminDashboard() {
                                     <span className="text-gray-500 font-semibold text-[14px] leading-[20px]">Tổng số vé đã bán</span>
                                     <span className="material-symbols-outlined text-[#b30004]" data-icon="confirmation_number">confirmation_number</span>
                                 </div>
-                                <div className="text-3xl font-bold text-[24px] leading-[32px] tracking-tight">128,432</div>
+                                <div className="text-3xl font-bold text-[24px] leading-[32px] tracking-tight">{dashboard ? dashboard.ticketsSold.toLocaleString() : "0"}</div>
                                 <div className="mt-4 flex items-center text-xs text-green-600 font-bold"><span className="material-symbols-outlined text-sm mr-1" data-icon="trending_up">trending_up</span>+12.5% so với tháng trước</div>
                             </div>
                         </div>
@@ -177,7 +204,7 @@ export default function AdminDashboard() {
                                     <span className="text-gray-500 font-semibold text-[14px] leading-[20px]">Xu hướng doanh thu</span>
                                     <span className="material-symbols-outlined text-[#b30004]" data-icon="payments">payments</span>
                                 </div>
-                                <div className="text-3xl font-bold text-[24px] leading-[32px] tracking-tight">$2.4M</div>
+                                <div className="text-3xl font-bold text-[24px] leading-[32px] tracking-tight">{dashboard ? dashboard.totalRevenue.toLocaleString() + "₫" : "0 VNĐ"}</div>
                                 <div className="mt-4 flex items-center space-x-1">
                                     <div className="h-8 flex items-end space-x-1 w-full">
                                         <div className="w-1/6 bg-[#b30004] opacity-20 h-2/5 rounded-t"></div>
@@ -190,31 +217,14 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-[#e8bcb6] flex flex-col justify-between">
-                            <div>
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="text-gray-500 font-semibold text-[14px] leading-[20px]">Tỷ lệ lấp đầy</span>
-                                    <span className="material-symbols-outlined text-[#b30004]" data-icon="data_usage">data_usage</span>
-                                </div>
-                                <div className="flex items-center space-x-4">
-                                    <div className="text-3xl font-bold text-[24px] leading-[32px] tracking-tight">84%</div>
-                                    <div className="relative h-12 w-12">
-                                        <svg className="h-full w-full transform -rotate-90">
-                                            <circle className="text-gray-100" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" strokeWidth="4"></circle>
-                                            <circle className="text-[#b30004]" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" strokeDasharray="125.6" strokeDashoffset="20" strokeWidth="4"></circle>
-                                        </svg>
-                                    </div>
-                                </div>
-                                <p className="text-xs text-gray-400 mt-4">Trên tất cả các địa điểm hoạt động</p>
-                            </div>
-                        </div>
+
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-[#e8bcb6] flex flex-col justify-between">
                             <div>
                                 <div className="flex justify-between items-start mb-2">
                                     <span className="text-gray-500 font-semibold text-[14px] leading-[20px]">Sự kiện đang hoạt động</span>
                                     <span className="material-symbols-outlined text-[#b30004]" data-icon="event_available">event_available</span>
                                 </div>
-                                <div className="text-3xl font-bold text-[24px] leading-[32px] tracking-tight">42</div>
+                                <div className="text-3xl font-bold text-[24px] leading-[32px] tracking-tight">{dashboard ? dashboard.activeEvents.toLocaleString() : "0"}</div>
                                 <div className="mt-4 flex -space-x-2">
                                     <img alt="event" className="h-6 w-6 rounded-full ring-2 ring-white" data-alt="vibrant concert lights and crowd silhouette at a music festival" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsFQK_8FL_r1ybl0gOE5acU5ZiVWaly-3m52SCih1WbpFUQtzv9Vh54BiYTqitfpt8am9GqA5W2jNWk1jc30ZjvR8ld1TEDMIjgPyJI-hiNnMQxa3eLEExHSCa8kFzSgIK_4a_nJbXTatKVnrqHZyXdsRiqp5oZaEjuiZaNggfpDHoCWfEt_or0p1_JXvZxNKJ9HNjxeRH073f-pEr_FlAUpaskh1Xi2L6FMiwXL4sy-OPeuQnSpA6Np46O62GjVY7Esvs8NaJZPA" />
                                     <img alt="event" className="h-6 w-6 rounded-full ring-2 ring-white" data-alt="energetic performance on stage with laser lights and theatrical smoke" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTdC5ixFDEyvpJcFdN-oBaCeV_fHCH9oiLlxhpi0_b2rE1_01WBwTudjwzemEC13oRtOyS-jZanjB2gNI26jQLF4GeOU1Okz8CQNFvxK9brXtLKsCTJfJaSXM-NmgIbT4CAz0Ofxe6jXFM2sKQy-c3juzHjJtacpy6rzj8gwiRlRPLHys0xkKcK99xP-wnkM0KGxmj9PhJelQ29Hgn6mNLzrhXSY6TaQ8rOkDQnengmWEQ8WZLXLEcHPAl3RZ0N1MQUaCcrQz9MDY" />
@@ -238,37 +248,37 @@ export default function AdminDashboard() {
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-xs font-bold text-gray-500">
                                         <span>18-24</span>
-                                        <span>45%</span>
+                                        <span>{dashboard?.ageDemographics?.["18-24"] ?? 0}%</span>
                                     </div>
                                     <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#b30004] w-[45%]"></div>
+                                        <div className="h-full bg-[#b30004]" style={{ width: `${dashboard?.ageDemographics?.["18-24"] ?? 0}%` }}></div>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-xs font-bold text-gray-500">
                                         <span>25-34</span>
-                                        <span>32%</span>
+                                        <span>{dashboard?.ageDemographics?.["25-34"] ?? 0}%</span>
                                     </div>
                                     <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#b30004] w-[32%] opacity-80"></div>
+                                        <div className="h-full bg-[#b30004] opacity-80" style={{ width: `${dashboard?.ageDemographics?.["25-34"] ?? 0}%` }}></div>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-xs font-bold text-gray-500">
                                         <span>35-44</span>
-                                        <span>15%</span>
+                                        <span>{dashboard?.ageDemographics?.["35-44"] ?? 0}%</span>
                                     </div>
                                     <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#b30004] w-[15%] opacity-60"></div>
+                                        <div className="h-full bg-[#b30004] opacity-60" style={{ width: `${dashboard?.ageDemographics?.["35-44"] ?? 0}%` }}></div>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-xs font-bold text-gray-500">
                                         <span>45+</span>
-                                        <span>8%</span>
+                                        <span>{dashboard?.ageDemographics?.["45+"] ?? 0}%</span>
                                     </div>
                                     <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#b30004] w-[8%] opacity-40"></div>
+                                        <div className="h-full bg-[#b30004] opacity-40" style={{ width: `${dashboard?.ageDemographics?.["45+"] ?? 0}%` }}></div>
                                     </div>
                                 </div>
                             </div>
@@ -280,27 +290,23 @@ export default function AdminDashboard() {
                                 <div className="relative h-48 w-48 flex items-center justify-center">
                                     <svg className="h-full w-full" viewBox="0 0 100 100">
                                         <circle cx="50" cy="50" fill="transparent" r="40" stroke="#f1f5f9" strokeWidth="20"></circle>
-                                        <circle cx="50" cy="50" fill="transparent" r="40" stroke="#b30004" strokeDasharray="125 251.2" strokeWidth="20"></circle>
-                                        <circle cx="50" cy="50" fill="transparent" r="40" stroke="#5f5e5e" strokeDasharray="60 251.2" strokeDashoffset="-125" strokeWidth="20"></circle>
-                                        <circle cx="50" cy="50" fill="transparent" r="40" stroke="#e1e3e4" strokeDasharray="66.2 251.2" strokeDashoffset="-185" strokeWidth="20"></circle>
+                                        <circle cx="50" cy="50" fill="transparent" r="40" stroke="#b30004" strokeDasharray={`${femaleDash} 251.2`} strokeWidth="20"></circle>
+                                        <circle cx="50" cy="50" fill="transparent" r="40" stroke="#5f5e5e" strokeDasharray={`${maleDash} 251.2`} strokeDashoffset={maleOffset} strokeWidth="20"></circle>
+                                        <circle cx="50" cy="50" fill="transparent" r="40" stroke="#e1e3e4" strokeDasharray={`${otherDash} 251.2`} strokeDashoffset={otherOffset} strokeWidth="20"></circle>
                                     </svg>
-                                    <div className="absolute flex flex-col items-center">
-                                        <span className="text-2xl font-bold">52%</span>
-                                        <span className="text-[10px] text-gray-400 font-bold uppercase">Female</span>
-                                    </div>
                                 </div>
                                 <div className="mt-8 grid grid-cols-3 gap-4 w-full">
                                     <div className="flex flex-col items-center">
                                         <span className="h-2 w-2 rounded-full bg-[#b30004] mb-1"></span>
-                                        <span className="text-[10px] font-bold text-gray-500">52% F</span>
+                                        <span className="text-[15px] font-bold text-gray-500">{femalePercent}% Nữ</span>
                                     </div>
                                     <div className="flex flex-col items-center">
                                         <span className="h-2 w-2 rounded-full bg-[#5f5e5e] mb-1"></span>
-                                        <span className="text-[10px] font-bold text-gray-500">24% M</span>
+                                        <span className="text-[15px] font-bold text-gray-500">{malePercent}% Nam</span>
                                     </div>
                                     <div className="flex flex-col items-center">
                                         <span className="h-2 w-2 rounded-full bg-[#e1e3e4] mb-1"></span>
-                                        <span className="text-[10px] font-bold text-gray-500">24% O</span>
+                                        <span className="text-[15px] font-bold text-gray-500">{otherPercent}% Khác</span>
                                     </div>
                                 </div>
                             </div>
@@ -356,13 +362,13 @@ export default function AdminDashboard() {
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center space-x-2">
                                                         <div className="flex-1 h-1.5 w-24 bg-gray-100 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-[#b30004] w-[0%]"></div>
+                                                            <div className="h-full bg-[#b30004]" style={{ width: `${event.occupancyPercent || 0}%` }}></div>
                                                         </div>
-                                                        <span className="text-xs font-bold text-gray-700">0%</span>
+                                                        <span className="text-xs font-bold text-gray-700">{event.occupancyPercent || 0}%</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <span className="text-sm font-bold text-gray-900">0 VNĐ</span>
+                                                    <span className="text-sm font-bold text-gray-900">{(event.totalRevenue || 0).toLocaleString("vi-VN")}₫</span>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <button

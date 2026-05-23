@@ -1,4 +1,6 @@
+
 import { supabase } from "../config/supabaseClient.js";
+import { DateTime } from "luxon";
 
 //Sửa phần giao dịch gần đây
 const getRelation = (value) => {
@@ -9,18 +11,13 @@ const formatMoney = (value) => {
   return `${Number(value || 0).toLocaleString("vi-VN")}₫`;
 };
 
+
+
 const formatTime = (value) => {
   if (!value) return "";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toLocaleTimeString("vi-VN", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+  return DateTime.fromISO(value, { zone: "utc" }) // parse UTC
+    .setZone("Asia/Ho_Chi_Minh")               // chuyển sang giờ Việt Nam
+    .toFormat("HH:mm:ss");                     // format
 };
 
 const normalizeStatus = (status) => {
@@ -93,27 +90,6 @@ export const getRevenueData = async (req, res) => {
 
     if (ticketsError) throw ticketsError;
 
-    /*    // --- XỬ LÝ DOANH THU & GIAO DỊCH ---
-        let totalRevenue = 0;
-        const formattedTransactions = [];
-    
-        (transactionsData || []).forEach(t => {
-          // Chỉ cộng tiền nếu giao dịch thành công
-          if (t.transaction_status === 'completed' || t.transaction_status === 'Thành công') {
-            totalRevenue += Number(t.amount) || 0;
-          }
-    
-          const eventName = t.bookings?.events?.name || `Booking #${t.booking_id}`;
-          // Format transaction cho UI
-          formattedTransactions.push({
-            ...t,
-            name: eventName,
-            time: new Date(t.purchase_date).toLocaleTimeString('vi-VN'),
-            status: t.transaction_status,
-            color: t.transaction_status === 'completed' ? '#00a000' : (t.transaction_status === 'pending' ? '#FFD700' : '#e00d0d')
-          });
-        });
-    */
     // --- XỬ LÝ DOANH THU & GIAO DỊCH ---
     let totalRevenue = 0;
 
@@ -176,13 +152,17 @@ export const getRevenueData = async (req, res) => {
       return {
         title: e.name,
         venue: e.location,
-        date: new Date(e.date).toLocaleDateString('vi-VN'),
+        //date: new Date(e.date).toLocaleDateString('vi-VN'),
+        rawDate: e.date,
         sold: sold,
         status: status,
         color: color,
         image_url: (e.image_url && !e.image_url.startsWith('blob:')) ? e.image_url : null
       };
     });
+
+    // --- Sort theo rawDate giảm dần (sự kiện mới nhất trước)
+    occupancy.sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate));
 
     res.json({
       totalRevenue,

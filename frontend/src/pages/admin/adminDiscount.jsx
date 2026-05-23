@@ -985,25 +985,27 @@ export default function AdminDiscountManagement() {
       </aside>
 
       <header className="topbar">
-        <div className="search-wrap">
-          <MaterialIcon>search</MaterialIcon>
-          <input
-            className="search-input"
-            placeholder="Tìm kiếm mã giảm giá..."
-            type="text"
-          />
-        </div>
-
         <div className="top-actions">
           <button className="icon-button" type="button" aria-label="Thông báo">
-            <MaterialIcon>notifications</MaterialIcon>
-            <span className="notification-dot" />
+            <MaterialIcon></MaterialIcon>
+            
           </button>
 
           <button className="icon-button" type="button" aria-label="Tài khoản">
-            <MaterialIcon>account_circle</MaterialIcon>
+            <MaterialIcon></MaterialIcon>
           </button>
         </div>
+        <div className="flex items-center gap-3">
+            <img
+              alt="Admin Avatar"
+              className="w-8 h-8 rounded-full border border-zinc-200"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBI4L469l41S96xmgUHO9nKcD6KjsjoY_CVrTYLhYJc2VbE_zW5HxkzmSHwIqlfM0KnEC-WL19TO9x8R9fX7DtyME_y5-8NbOLI0cLEZgatjSDfTB-PGQZHwDd-4U8ZPWilCGvdIHAvJQF51sUbFjEmPkKA55lVy0Rfz9PAzztd_7raBTqPbD3wEqqgDyb_VLrdTFN-bio2dOA5RPCapydLuVMsmSNR5t0_u-jS8bZqm99huUUyrRAWdmMK0fPkBAWoHA1ihXEDUyg"
+            />
+
+            <span className="text-sm font-semibold hidden lg:block">
+              System Admin
+            </span>
+          </div>
       </header>
 
       <main className="main">
@@ -1045,19 +1047,6 @@ export default function AdminDiscountManagement() {
               <p className="stat-label">Tổng lượt sử dụng</p>
               <p className="stat-value">
                 {loading ? "..." : formatNumber(stats.totalUsed)}
-              </p>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon gray">
-              <MaterialIcon>savings</MaterialIcon>
-            </div>
-            <div>
-              <p className="stat-label">Doanh thu tiết kiệm</p>
-              <p className="stat-value">
-                {loading ? "..." : formatMoney(stats.estimatedSaved)}{" "}
-                <span className="currency">VNĐ</span>
               </p>
             </div>
           </div>
@@ -1221,16 +1210,6 @@ export default function AdminDiscountManagement() {
                               onClick={() => handleView(row)}
                             >
                               <MaterialIcon>visibility</MaterialIcon>
-                            </button>
-
-                            <button
-                              className="row-action delete"
-                              type="button"
-                              title={`Xóa ${row.code}`}
-                              aria-label={`Xóa ${row.code}`}
-                              onClick={() => handleDelete(row.id, row.code)}
-                            >
-                              <MaterialIcon>delete</MaterialIcon>
                             </button>
                           </div>
                         </td>

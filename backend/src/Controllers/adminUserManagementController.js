@@ -190,10 +190,10 @@ async function getUserStats(req, res) {
     firstDayOfMonth.setDate(1);
     firstDayOfMonth.setHours(0, 0, 0, 0);
 
-    // Lấy tất cả người dùng từ Supabase
+    // Lấy tất cả người dùng từ Supabase (bao gồm birth_year để tính độ tuổi)
     const { data: users, error } = await supabase
       .from(USER_TABLE)
-      .select("id, status, gender, created_at");
+      .select("id, status, gender, created_at, birth_year");
 
     if (error) {
       throw error;
@@ -209,6 +209,34 @@ async function getUserStats(req, res) {
     const femaleUsers = users.filter(u => u.gender === "Nữ").length;
     const otherGenderUsers = users.filter(u => u.gender === "Khác").length;
 
+    // Thống kê phân bổ độ tuổi từ birth_year
+    const currentYear = new Date().getFullYear();
+    const ageGroups = { "<18": 0, "18-24": 0, "25-34": 0, "35-44": 0, "45+": 0 };
+    let totalWithAge = 0;
+
+    users.forEach(u => {
+      if (!u.birth_year) return;
+      const age = currentYear - Number(u.birth_year);
+      if (isNaN(age) || age < 0 || age > 120) return;
+      totalWithAge++;
+      if (age < 18) ageGroups["<18"]++;
+      else if (age <= 24) ageGroups["18-24"]++;
+      else if (age <= 34) ageGroups["25-34"]++;
+      else if (age <= 44) ageGroups["35-44"]++;
+      else ageGroups["45+"]++;
+    });
+
+    // Trả về cả số lượng tuyệt đối và tỷ lệ phần trăm
+    const ageStats = Object.fromEntries(
+      Object.entries(ageGroups).map(([label, count]) => [
+        label,
+        {
+          count,
+          percent: totalWithAge > 0 ? Math.round((count / totalWithAge) * 100) : 0,
+        },
+      ])
+    );
+
     res.json({
       totalUsers,
       newUsers,
@@ -222,6 +250,7 @@ async function getUserStats(req, res) {
         active: activeUsers,
         blocked: blockedUsers,
       },
+      ageStats,
     });
   } catch (error) {
     res.status(500).json({
@@ -322,6 +351,7 @@ async function createUser(req, res) {
       lastName = "",
       phoneNumber = "",
       gender = "Khác",
+      birth_year,
       status = "Hoạt động",
     } = req.body;
 
@@ -354,6 +384,7 @@ async function createUser(req, res) {
         last_name: lastName,
         phone_number: phoneNumber,
         gender,
+        birth_year,
         status: mapUiStatusToDb(status),
       })
       .select(
@@ -366,6 +397,7 @@ async function createUser(req, res) {
           last_name,
           phone_number,
           gender,
+          birth_year,
           status,
           created_at,
           updated_at,
