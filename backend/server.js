@@ -16,6 +16,7 @@ import ticketRouter from "./src/Routers/ticketRouter.js";
 import supportRouter from "./src/Routers/supportRouter.js";
 import eventFilterRouter from "./src/Routers/eventFilterRouter.js";
 import adminDashboardRouter from "./src/Routers/adminDashboardRouter.js";
+import discountRouter from "./src/Routers/discountRouter.js";
 import { startSeatReleaseWorker } from "./src/jobs/seatReleaseWorker.js";
 
 const app = express();
@@ -38,6 +39,7 @@ app.use("/api/revenue", adminRevenue);
 app.use("/api/admin/support/articles", adminInstructionRouter);
 app.use("/api/discount", adminDiscountRouter);
 app.use("/api/discount/create", adminDiscountCreateRouter);
+app.use("/api/discounts", discountRouter);
 app.use("/api/support", supportRouter);
 app.use("/api/events/public", eventFilterRouter);
 app.use("/api/booking", bookingRouter);

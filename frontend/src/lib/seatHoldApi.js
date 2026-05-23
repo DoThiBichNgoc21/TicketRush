@@ -74,22 +74,35 @@ export async function releaseSeats(seatIds) {
 
 
 
-export async function confirmBooking({ eventId, showtimeId, seatIds, totalAmount }) {
-
+export async function confirmBooking({ eventId, showtimeId, seatIds, totalAmount, discountId, discountAmount, paymentMethod }) {
   const { data } = await bookingAxios.post('/booking/confirm', {
-
     event_id: eventId,
-
     showtime_id: showtimeId,
-
     seat_ids: seatIds,
-
     total_amount: totalAmount,
-
+    p_discount_id: discountId,
+    p_discount_amount: discountAmount,
+    payment_method: paymentMethod || 'Credit Card'
   })
-
   return data
+}
 
+export async function validateDiscount({ code, eventId, totalPrice, quantity }) {
+  // Lưu ý: Endpoint này ở /api/discounts/validate (theo server.js config)
+  const { data } = await bookingAxios.post('/discounts/validate', {
+    code,
+    eventId,
+    totalPrice,
+    quantity
+  })
+  return data
+}
+
+export async function getAvailableDiscounts(eventId) {
+  const { data } = await bookingAxios.get('/discounts/available', {
+    params: { eventId }
+  })
+  return data
 }
 
 export async function getLockedSeats(showtimeId) {

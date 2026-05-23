@@ -15,34 +15,33 @@ export function HeroBanner() {
 
   useEffect(() => {
     let mounted = true
-    ;(async () => {
-      try {
-        const res = await getEvents()
-        const events = res?.events || []
-        // Prefer an explicitly featured event
-        const featured = events.find((e) => e.is_featured || e.is_featured === true)
-        if (!mounted) return
-        if (featured) {
-          const evt = featured
-          const banner = {
+      ; (async () => {
+        try {
+          const res = await getEvents({ limit: 10 }) // Lấy 10 cái để lọc cho chắc
+          if (!mounted || !res?.events) return
+
+          // Sắp xếp theo ID giảm dần (mới nhất lên đầu) và lấy 5 cái
+          const newestEvents = [...res.events]
+            .sort((a, b) => b.id - a.id)
+            .slice(0, 5)
+
+          const mappedBanners = newestEvents.map((evt) => ({
             id: `ev-${evt.id}`,
             eventId: evt.id,
-            title: evt.name || evt.title || "Sự kiện hot",
-            subtitle: "HOT",
-            description: evt.description || "",
-            location: evt.location || evt.venue || "",
+            title: evt.name || evt.title || "Sự kiện mới",
+            subtitle: "MỚI",
+            description: evt.description || "Khám phá sự kiện hấp dẫn vừa ra mắt tại TicketRush.",
+            location: evt.location || evt.venue || "Việt Nam",
             date: evt.date ? new Date(evt.date).toLocaleDateString("vi-VN") : "",
-            gradient: "from-orange-900/80 via-red-900/60 to-transparent",
-            attendees: evt.attendees || "",
+            gradient: "from-blue-900/80 via-slate-900/60 to-transparent",
             image: evt.image_url || null,
-          }
-          setBanners([banner])
+          }))
+
+          setBanners(mappedBanners)
+        } catch (e) {
+          console.error("HeroBanner: lỗi lấy sự kiện mới", e)
         }
-      } catch (e) {
-        // ignore fetch errors — keep defaults
-        console.error("HeroBanner: lỗi lấy sự kiện hot", e)
-      }
-    })()
+      })()
     return () => {
       mounted = false
     }
@@ -76,7 +75,9 @@ export function HeroBanner() {
       {banners.map((banner, index) => (
         <div
           key={banner.id}
-          className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? "opacity-100" : "opacity-0"
+          className={`absolute inset-0 transition-all duration-700 ${index === currentSlide
+            ? "opacity-100 z-10 pointer-events-auto"
+            : "opacity-0 z-0 pointer-events-none"
             }`}
         >
           {/* Event image (if present) */}
@@ -111,7 +112,7 @@ export function HeroBanner() {
               <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 leading-tight drop-shadow-lg">
                 {banner.title}
               </h1>
-              <p className="text-lg text-white/90 mb-6 max-w-md">
+              <p className="text-lg text-white/90 mb-6 max-w">
                 {banner.description}
               </p>
 
@@ -131,10 +132,10 @@ export function HeroBanner() {
                 </div> */}
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-4">
                 <Button
                   size="lg"
-                  className="bg-red-600 hover:bg-red-700 text-white shadow-lg"
+                  className="bg-red-600 hover:bg-red-700 text-white shadow-lg px-12 h-14 text-lg font-black rounded-xl transform hover:scale-105 transition-all"
                   onClick={() => banner.eventId ? navigate(`/event/${banner.eventId}`) : null}
                   disabled={!banner.eventId}
                 >
@@ -143,11 +144,10 @@ export function HeroBanner() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white/30 text-red hover:bg-white/10"
-                  onClick={() => banner.eventId ? navigate(`/event/${banner.eventId}`) : null}
-                  disabled={!banner.eventId}
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/40 backdrop-blur-md px-8 h-14 text-lg font-bold rounded-xl transform hover:scale-105 transition-all"
+                  onClick={() => navigate("/su-kien")}
                 >
-                  Xem chi tiết
+                  Xem tất cả sự kiện
                 </Button>
               </div>
             </div>
@@ -161,7 +161,7 @@ export function HeroBanner() {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-background/20 hover:bg-background/40 text-foreground"
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/20 hover:bg-black/40 text-white z-50 transition-all"
             onClick={prevSlide}
           >
             <ChevronLeft className="w-6 h-6" />
@@ -169,7 +169,7 @@ export function HeroBanner() {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-background/20 hover:bg-background/40 text-foreground"
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/20 hover:bg-black/40 text-white z-50 transition-all"
             onClick={nextSlide}
           >
             <ChevronRight className="w-6 h-6" />
@@ -179,7 +179,7 @@ export function HeroBanner() {
 
       {/* Dots Indicator */}
       {banners && banners.length > 0 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-50">
           {banners.map((_, index) => (
             <button
               key={index}
