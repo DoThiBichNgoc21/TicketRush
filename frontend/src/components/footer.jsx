@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { Phone, Mail, Facebook, Send, Instagram, Ticket, MapPin } from "lucide-react"
+import { Phone, Mail, Globe, Send, Camera, Ticket, MapPin } from "lucide-react"
 
 const footerLinks = {
   "Về chúng tôi": [
@@ -39,7 +39,7 @@ export function Footer() {
         const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
         const response = await fetch(`${API_BASE_URL}/api/admin/support/articles/contact`);
         if (!response.ok) return;
-        
+
         const result = await response.json();
         if (result.success && result.data) {
           const d = result.data;
@@ -94,11 +94,11 @@ export function Footer() {
                 <span>{contactData.support_email}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Facebook className="w-4 h-4 text-primary flex-shrink-0" />
+                <Globe className="w-4 h-4 text-primary flex-shrink-0" />
                 <a href={contactData.facebook_page} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">Facebook: TicketRush</a>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Instagram className="w-4 h-4 text-primary flex-shrink-0" />
+                <Camera className="w-4 h-4 text-primary flex-shrink-0" />
                 <a href={contactData.instagram_page} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">Instagram: @ticketrush</a>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -116,7 +116,7 @@ export function Footer() {
                 className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                 aria-label="Facebook"
               >
-                <Facebook className="w-5 h-5" />
+                <Globe className="w-5 h-5" />
               </a>
               <a
                 href={contactData.zalo_oa_id}
@@ -134,7 +134,7 @@ export function Footer() {
                 className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
                 aria-label="Instagram"
               >
-                <Instagram className="w-5 h-5" />
+                <Camera className="w-5 h-5" />
               </a>
             </div>
           </div>
